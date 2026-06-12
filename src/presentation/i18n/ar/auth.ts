@@ -1,0 +1,16 @@
+export const auth = {
+  loginTitle: 'مرحبًا بعودتك',
+  loginSubtitle: 'سجّل الدخول إلى حساب كلينو',
+  registerTitle: 'أنشئ حسابك',
+  registerSubtitle: 'ابدأ بإدارة أعمال الغسيل الخاصة بك',
+  fullName: 'الاسم الكامل',
+  email: 'البريد الإلكتروني',
+  password: 'كلمة المرور',
+  confirmPassword: 'تأكيد كلمة المرور',
+  rememberMe: 'تذكرني',
+  signIn: 'تسجيل الدخول',
+  signUp: 'إنشاء حساب',
+  createAccount: 'إنشاء الحساب',
+  haveAccount: 'لديك حساب بالفعل؟',
+  noAccount: 'ليس لديك حساب؟',
+} as const

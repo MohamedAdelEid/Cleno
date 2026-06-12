@@ -1,0 +1,36 @@
+/* Sileo — theme + layout overrides (https://sileo.aaryan.design/docs/styling) */
+
+[data-sileo-viewport] {
+  z-index: 100;
+  font-family: var(--font-sans);
+}
+
+/* Keep in sync with sileo internal WIDTH constant (350) */
+:root {
+  --sileo-state-success: oklch(0.62 0.19 145);
+  --sileo-width: 350px;
+}
+
+.dark {
+  --sileo-state-success: oklch(0.72 0.19 145);
+}
+
+/* Center title pill content (badge + title) inside the tab */
+[data-sileo-header] {
+  justify-content: center !important;
+  width: var(--_pw) !important;
+}
+
+[data-sileo-header-inner] {
+  justify-content: center;
+  width: 100%;
+}
+
+[data-sileo-title] {
+  text-transform: none !important;
+  text-align: center;
+}
+
+[data-sileo-description] {
+  text-align: center;
+}

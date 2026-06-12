@@ -1,0 +1,25 @@
+import type { SVGProps } from 'react'
+
+export const SidebarToggleIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    {...props}
+  >
+    <path
+      d="M2 11C2 7.229 2 5.343 3.172 4.172C4.344 3.001 6.229 3 10 3H14C17.771 3 19.657 3 20.828 4.172C21.999 5.344 22 7.229 22 11V13C22 16.771 22 18.657 20.828 19.828C19.656 20.999 17.771 21 14 21H10C6.229 21 4.343 21 3.172 19.828C2.001 18.656 2 16.771 2 13V11Z"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    />
+    <path
+      opacity={0.5}
+      d="M15 21V3"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+    />
+  </svg>
+)

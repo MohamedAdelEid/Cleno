@@ -1,0 +1,16 @@
+export const auth = {
+  loginTitle: 'Welcome back',
+  loginSubtitle: 'Sign in to your Cleno account',
+  registerTitle: 'Create your account',
+  registerSubtitle: 'Start managing your laundry business',
+  fullName: 'Full name',
+  email: 'Email',
+  password: 'Password',
+  confirmPassword: 'Confirm password',
+  rememberMe: 'Remember me',
+  signIn: 'Sign in',
+  signUp: 'Sign up',
+  createAccount: 'Create account',
+  haveAccount: 'Already have an account?',
+  noAccount: "Don't have an account?",
+} as const
