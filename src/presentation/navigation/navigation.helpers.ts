@@ -1,5 +1,25 @@
+import { matchPath } from 'react-router-dom'
+
 import type { Permission } from '@/domain/types'
+import { ROUTES } from '@/presentation/routes/routes.constants'
 import type { NavigationGroup, NavigationItem } from './navigation.types'
+
+const breadcrumbRouteOverrides = [
+  { path: ROUTES.ROLES.NEW, labelKey: 'addRole' },
+  { path: ROUTES.ROLES.EDIT, labelKey: 'editRole' },
+  { path: ROUTES.COMPANIES.NEW, labelKey: 'addCompany' },
+  { path: ROUTES.COMPANIES.EDIT, labelKey: 'editCompany' },
+] as const
+
+export const findBreadcrumbRouteOverride = (pathname: string) => {
+  for (const route of breadcrumbRouteOverrides) {
+    if (matchPath({ path: route.path, end: true }, pathname)) {
+      return route
+    }
+  }
+
+  return null
+}
 
 const canAccessItem = (
   item: NavigationItem,

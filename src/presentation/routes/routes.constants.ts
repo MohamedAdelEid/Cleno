@@ -12,6 +12,8 @@ export const ROUTES = {
   },
   ROLES: {
     INDEX: '/dashboard/roles',
+    NEW: '/dashboard/roles/new',
+    EDIT: '/dashboard/roles/:roleId/edit',
   },
   BRANCHES: {
     INDEX: '/dashboard/branches',
@@ -24,6 +26,11 @@ export const ROUTES = {
   },
   CUSTOMERS: {
     INDEX: '/dashboard/customers',
+  },
+  COMPANIES: {
+    INDEX: '/dashboard/companies',
+    NEW: '/dashboard/companies/new',
+    EDIT: '/dashboard/companies/:companyId/edit',
   },
   SETTINGS: {
     INDEX: '/dashboard/settings',

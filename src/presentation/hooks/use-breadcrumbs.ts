@@ -1,11 +1,18 @@
 import type { LucideIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
+
 import { useFilteredNavigation } from '@/presentation/hooks/use-filtered-navigation'
 import { useTranslation } from '@/presentation/hooks/use-translation'
-import { findNavItemByPath } from '@/presentation/navigation/navigation.helpers'
+import {
+  findBreadcrumbRouteOverride,
+  findNavItemByPath,
+  normalizeNavPath,
+} from '@/presentation/navigation/navigation.helpers'
+import { ROUTES } from '@/presentation/routes/routes.constants'
 
 export interface BreadcrumbEntry {
+  id: string
   label: string
   href?: string
   icon?: LucideIcon
@@ -17,32 +24,55 @@ export const useBreadcrumbs = (): BreadcrumbEntry[] => {
   const navigation = useFilteredNavigation()
 
   return useMemo(() => {
+    const routeOverride = findBreadcrumbRouteOverride(pathname)
     const match = findNavItemByPath(navigation, pathname)
+    const normalizedPath = normalizeNavPath(pathname)
 
-    if (!match) {
-      return [{ label: t('dashboard') }]
+    if (!match && !routeOverride) {
+      return [{ id: 'nav:dashboard', label: t('dashboard'), href: ROUTES.DASHBOARD.HOME }]
     }
 
-    const { item, parent, group } = match
     const crumbs: BreadcrumbEntry[] = []
+    const { item, parent } = match ?? {}
 
-    if (group?.titleKey) {
-      const groupLanding = group.items[0]?.href ?? group.items[0]?.children?.[0]?.href
+    if (parent?.href) {
+      const parentHref = normalizeNavPath(parent.href)
       crumbs.push({
-        label: t(group.titleKey),
-        href: groupLanding && groupLanding !== pathname ? groupLanding : undefined,
-        icon: parent?.icon ?? item.icon,
-      })
-    }
-
-    if (parent) {
-      crumbs.push({
+        id: `nav:${parentHref}`,
         label: t(parent.titleKey),
+        href: parentHref !== normalizedPath ? parent.href : undefined,
         icon: parent.icon,
       })
     }
 
-    crumbs.push({ label: t(item.titleKey) })
+    if (item?.href) {
+      const itemHref = normalizeNavPath(item.href)
+      const isExactNavMatch = itemHref === normalizedPath
+
+      crumbs.push({
+        id: `nav:${itemHref}`,
+        label: t(item.titleKey),
+        href:
+          !isExactNavMatch && !routeOverride
+            ? item.href
+            : routeOverride
+              ? item.href
+              : undefined,
+        icon: crumbs.length === 0 ? item.icon : undefined,
+      })
+    }
+
+    if (routeOverride) {
+      crumbs.push({
+        id: `route:${routeOverride.labelKey}`,
+        label: t(routeOverride.labelKey),
+      })
+    }
+
+    if (!crumbs.length) {
+      return [{ id: 'nav:dashboard', label: t('dashboard'), href: ROUTES.DASHBOARD.HOME }]
+    }
+
     return crumbs
   }, [navigation, pathname, t])
 }

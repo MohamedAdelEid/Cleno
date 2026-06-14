@@ -1,6 +1,7 @@
 import type { PaginationState, RowSelectionState } from '@tanstack/react-table'
 import { ChevronDown, Trash2 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import type { ManagedRole } from '@/domain/entities'
 import { RoleStatus } from '@/domain/enums'
@@ -26,13 +27,16 @@ import {
 } from '@/presentation/components/ui/dropdown-menu'
 import { useDirection } from '@/presentation/hooks/use-direction'
 import { useTranslation } from '@/presentation/hooks/use-translation'
+import { buildRoleEditPath } from '@/presentation/routes/role.routes'
 import { AssignUsersDialog } from './assign-users-dialog'
 import { RoleStatusFilter } from './role-status-filter'
 import { RoleUsersDialog } from './role-users-dialog'
 import { createRolesColumns } from './roles-columns'
-import { assignableUsersDummyData, rolesDummyData } from './roles.data'
+import { assignableUsersDummyData, FEATURED_ROLE_IDS, rolesDummyData } from './roles.data'
+import { RolesOverviewSection } from './roles-overview-section'
 
 export const RolesTableSection = () => {
+  const navigate = useNavigate()
   const { t } = useTranslation('roles')
   const { t: tCommon } = useTranslation('common')
   const { isRtl } = useDirection()
@@ -73,9 +77,17 @@ export const RolesTableSection = () => {
       groupSettings: t('groupSettings'),
       permissionSettingsFor: t('permissionSettingsFor'),
       groupEmpty: t('groupEmpty'),
+      selectAll: t('selectAll'),
       addPermission: t('addPermission'),
     }),
     [t],
+  )
+
+  const handleEditRole = useCallback(
+    (role: ManagedRole) => {
+      navigate(buildRoleEditPath(role.id))
+    },
+    [navigate],
   )
 
   const filteredRoles = useMemo(() => {
@@ -91,6 +103,14 @@ export const RolesTableSection = () => {
       return matchesStatus && matchesSearch
     })
   }, [roles, search, statusFilter])
+
+  const featuredRoles = useMemo(
+    () =>
+      FEATURED_ROLE_IDS.map((id) => roles.find((role) => role.id === id)).filter(
+        (role): role is ManagedRole => !!role,
+      ),
+    [roles],
+  )
 
   const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id])
   const selectedCount = selectedIds.length
@@ -152,7 +172,9 @@ export const RolesTableSection = () => {
   }
 
   const handleAssign = (roleId: string, userIds: string[]) => {
-    const usersToAdd = assignableUsersDummyData.filter((user) => userIds.includes(user.id))
+    const usersToAdd = assignableUsersDummyData
+      .filter((user) => userIds.includes(user.id))
+      .map((user) => ({ ...user, status: RoleStatus.Active }))
 
     setRoles((current) =>
       current.map((role) =>
@@ -199,11 +221,11 @@ export const RolesTableSection = () => {
           onPermissionsClick: setPermissionsRole,
           onUsersClick: setUsersRole,
           onAssignUserClick: setAssignRole,
-          onEditClick: (role) => console.info('Edit role:', role.id),
+          onEditClick: handleEditRole,
           onDeleteClick: (role) => setDeleteTarget(role),
         },
       ),
-    [isRtl, t],
+    [isRtl, t, handleEditRole],
   )
 
   const paginationLabels = useMemo(
@@ -217,15 +239,37 @@ export const RolesTableSection = () => {
   )
 
   return (
-    <>
+    <div className="space-y-6">
+      <RolesOverviewSection
+        roles={featuredRoles}
+        labels={{
+          seeAll: t('seeAll'),
+          seeAllUsers: t('seeAllUsers'),
+          manage: t('manageRole'),
+          viewPermissions: t('viewPermissions'),
+          statusActive: t('statusActive'),
+          statusInactive: t('statusInactive'),
+          emptyMembers: t('emptyMembers'),
+        }}
+        onPermissionsClick={setPermissionsRole}
+        onUsersClick={setUsersRole}
+        onManageClick={handleEditRole}
+      />
+
       <DataTablePanel
         index={1}
         toolbar={
-          <DataTableToolbar
-            search={search}
-            onSearchChange={setSearch}
-            searchPlaceholder={t('searchPlaceholder')}
-            endContent={
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-medium text-foreground">{t('tableTitle')}</h2>
+              <p className="text-xs text-muted-foreground">{t('tableDescription')}</p>
+            </div>
+
+            <DataTableToolbar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder={t('searchPlaceholder')}
+              endContent={
               <>
                 <DataTableBulkActions
                   visible={selectedCount > 0}
@@ -276,6 +320,7 @@ export const RolesTableSection = () => {
               </>
             }
           />
+          </div>
         }
         footer={
           <DataTablePagination
@@ -378,6 +423,6 @@ export const RolesTableSection = () => {
           }
         }}
       />
-    </>
+    </div>
   )
 }

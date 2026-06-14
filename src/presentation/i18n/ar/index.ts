@@ -4,6 +4,8 @@ import { common } from './common'
 import { dashboard } from './dashboard'
 import { navigation } from './navigation'
 import { roles } from './roles'
+import { companies } from './companies'
+import { orders } from './orders'
 
 export const ar: Partial<Record<Namespace, Record<string, string>>> = {
   common,
@@ -11,4 +13,6 @@ export const ar: Partial<Record<Namespace, Record<string, string>>> = {
   navigation,
   dashboard,
   roles,
+  companies,
+  orders,
 }

@@ -1,10 +1,11 @@
 import { Plus, Shield } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
-import { notify } from '@/infrastructure/libs/toast/toast'
-import { PageHeader } from '@/presentation/components/layout'
 import { RolesTableSection } from '@/presentation/components/admin/roles'
+import { PageHeader } from '@/presentation/components/layout'
 import { Button } from '@/presentation/components/ui/button'
 import { useTranslation } from '@/presentation/hooks/use-translation'
+import { ROUTES } from '@/presentation/routes/routes.constants'
 
 export const RolesPage = () => {
   const { t } = useTranslation('roles')
@@ -16,16 +17,11 @@ export const RolesPage = () => {
         description={t('pageDescription')}
         icon={Shield}
         action={
-          <Button
-            onClick={() =>
-              notify.info({
-                title: t('addRole'),
-                description: t('addRoleComingSoon'),
-              })
-            }
-          >
-            <Plus />
-            {t('addRole')}
+          <Button asChild>
+            <Link to={ROUTES.ROLES.NEW}>
+              <Plus />
+              {t('addRole')}
+            </Link>
           </Button>
         }
       />

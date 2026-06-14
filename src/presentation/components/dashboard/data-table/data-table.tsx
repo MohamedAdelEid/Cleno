@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: RowSelectionState
   onRowSelectionChange?: OnChangeFn<RowSelectionState>
   getRowId?: (row: TData) => string
+  getRowClassName?: (row: TData) => string | undefined
   animateRows?: boolean
   enablePagination?: boolean
   pagination?: PaginationState
@@ -55,6 +56,7 @@ export const DataTable = <TData, TValue>({
   rowSelection: controlledRowSelection,
   onRowSelectionChange,
   getRowId,
+  getRowClassName,
   animateRows = false,
   enablePagination = false,
   pagination: controlledPagination,
@@ -142,6 +144,7 @@ export const DataTable = <TData, TValue>({
         <TableBody>
           {rows.length ? (
             rows.map((row, index) => {
+              const rowClassName = getRowClassName?.(row.original)
               const cells = row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -153,6 +156,7 @@ export const DataTable = <TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() ? 'selected' : undefined}
+                    className={rowClassName}
                   >
                     {cells}
                   </TableRow>
@@ -163,6 +167,7 @@ export const DataTable = <TData, TValue>({
                 <MotionTableRow
                   key={row.id}
                   data-state={row.getIsSelected() ? 'selected' : undefined}
+                  className={rowClassName}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{

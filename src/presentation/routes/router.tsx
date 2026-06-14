@@ -4,8 +4,14 @@ import { AuthLayout } from '@/presentation/layouts/auth-layout'
 import { LoginPage } from '@/presentation/pages/auth/login-page'
 import { RegisterPage } from '@/presentation/pages/auth/register-page'
 import { OverviewPage } from '@/presentation/pages/admin/overview-page'
+import { OrdersPage } from '@/presentation/pages/admin/orders'
+import { AddRolePage, EditRolePage, RolesPage } from '@/presentation/pages/admin/roles'
+import {
+  AddCompanyPage,
+  CompaniesPage,
+  EditCompanyPage,
+} from '@/presentation/pages/admin/companies'
 import { DashboardPlaceholderPage } from '@/presentation/pages/dashboard/dashboard-placeholder-page'
-import { RolesPage } from '@/presentation/pages/admin/roles-page'
 import { NotFoundPage } from '@/presentation/pages/not-found-page'
 import { PublicRoute } from './public-route'
 import { ROUTES } from './routes.constants'
@@ -43,16 +49,36 @@ export const router = createBrowserRouter([
         element: <RolesPage />,
       },
       {
+        path: ROUTES.ROLES.NEW,
+        element: <AddRolePage />,
+      },
+      {
+        path: ROUTES.ROLES.EDIT,
+        element: <EditRolePage />,
+      },
+      {
         path: ROUTES.BRANCHES.INDEX,
         element: <DashboardPlaceholderPage title="Branches" />,
       },
       {
         path: ROUTES.ORDERS.INDEX,
-        element: <DashboardPlaceholderPage title="Orders" />,
+        element: <OrdersPage />,
       },
       {
         path: ROUTES.LAUNDRY.INDEX,
         element: <DashboardPlaceholderPage title="Laundry" />,
+      },
+      {
+        path: ROUTES.COMPANIES.INDEX,
+        element: <CompaniesPage />,
+      },
+      {
+        path: ROUTES.COMPANIES.NEW,
+        element: <AddCompanyPage />,
+      },
+      {
+        path: ROUTES.COMPANIES.EDIT,
+        element: <EditCompanyPage />,
       },
       {
         path: ROUTES.CUSTOMERS.INDEX,

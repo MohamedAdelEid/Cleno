@@ -2,60 +2,117 @@ import { Permission } from '@/domain/constants/permissions'
 import type { ManagedRole, RoleMember } from '@/domain/entities'
 import { RoleStatus } from '@/domain/enums'
 
+export const FEATURED_ROLE_IDS = ['role-1', 'role-2', 'role-3'] as const
+
 export const assignableUsersDummyData: RoleMember[] = [
   {
     id: 'u-101',
     fullName: 'Sara Al-Harbi',
     email: 'sara.alharbi@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Active,
   },
   {
     id: 'u-102',
     fullName: 'Omar Khalid',
     email: 'omar.khalid@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Active,
   },
   {
     id: 'u-103',
     fullName: 'Layla Mansour',
     email: 'layla.mansour@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Inactive,
   },
   {
     id: 'u-104',
     fullName: 'Youssef Nabil',
     email: 'youssef.nabil@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Active,
   },
   {
     id: 'u-105',
     fullName: 'Nour El-Din',
     email: 'nour.eldin@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Active,
   },
   {
     id: 'u-106',
     fullName: 'Hana Saleh',
     email: 'hana.saleh@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Inactive,
   },
   {
     id: 'u-107',
     fullName: 'Karim Farouk',
     email: 'karim.farouk@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Active,
   },
   {
     id: 'u-108',
     fullName: 'Maya Hassan',
     email: 'maya.hassan@cleno.app',
     avatarUrl: null,
+    status: RoleStatus.Active,
   },
 ]
 
 export const rolesDummyData: ManagedRole[] = [
   {
     id: 'role-1',
+    name: 'Admin',
+    description:
+      'Full platform access for system administrators. Manage users, roles, branches, orders, and global settings across the laundry network.',
+    permissions: [
+      Permission.UsersView,
+      Permission.UsersCreate,
+      Permission.RolesView,
+      Permission.RolesCreate,
+      Permission.BranchesView,
+      Permission.BranchesCreate,
+      Permission.OrdersView,
+      Permission.OrdersUpdate,
+      Permission.LaundryView,
+      Permission.CustomersView,
+      Permission.SettingsView,
+    ],
+    users: assignableUsersDummyData.slice(0, 5),
+    status: RoleStatus.Active,
+    createdAt: '2025-10-03T14:15:00.000Z',
+  },
+  {
+    id: 'role-2',
+    name: 'Laundry Operations',
+    description:
+      'Manages laundry floor workflow, bag tracking, order processing, and status updates for in-progress items across branches.',
+    permissions: [
+      Permission.LaundryView,
+      Permission.OrdersView,
+      Permission.OrdersUpdate,
+      Permission.BranchesView,
+    ],
+    users: assignableUsersDummyData.slice(2, 7),
+    status: RoleStatus.Active,
+    createdAt: '2026-01-08T11:00:00.000Z',
+  },
+  {
+    id: 'role-3',
+    name: 'Customer Support',
+    description:
+      'Handles customer inquiries, order lookups, and incident reporting without access to sensitive admin or system configuration settings.',
+    permissions: [Permission.CustomersView, Permission.OrdersView],
+    users: assignableUsersDummyData.slice(0, 4),
+    status: RoleStatus.Active,
+    createdAt: '2025-09-21T16:45:00.000Z',
+  },
+  {
+    id: 'role-4',
     name: 'Branch Manager',
     description:
       'Oversees daily branch operations, staff scheduling, and customer escalations across assigned locations.',
@@ -66,47 +123,9 @@ export const rolesDummyData: ManagedRole[] = [
       Permission.UsersView,
       Permission.CustomersView,
     ],
-    users: assignableUsersDummyData.slice(0, 5),
+    users: assignableUsersDummyData.slice(0, 3),
     status: RoleStatus.Active,
     createdAt: '2025-11-12T09:30:00.000Z',
-  },
-  {
-    id: 'role-2',
-    name: 'Operations Admin',
-    description:
-      'Full administrative access to users, roles, branches, and system configuration with audit visibility.',
-    permissions: [
-      Permission.UsersView,
-      Permission.UsersCreate,
-      Permission.RolesView,
-      Permission.RolesCreate,
-      Permission.BranchesView,
-      Permission.BranchesCreate,
-      Permission.SettingsView,
-    ],
-    users: assignableUsersDummyData.slice(2, 4),
-    status: RoleStatus.Active,
-    createdAt: '2025-10-03T14:15:00.000Z',
-  },
-  {
-    id: 'role-3',
-    name: 'Laundry Supervisor',
-    description:
-      'Manages laundry floor workflow, bag tracking, and order status updates for in-progress items.',
-    permissions: [Permission.LaundryView, Permission.OrdersView, Permission.OrdersUpdate],
-    users: assignableUsersDummyData.slice(4, 7),
-    status: RoleStatus.Active,
-    createdAt: '2026-01-08T11:00:00.000Z',
-  },
-  {
-    id: 'role-4',
-    name: 'Customer Support',
-    description:
-      'Handles customer inquiries, order lookups, and incident reporting without access to sensitive admin settings.',
-    permissions: [Permission.CustomersView, Permission.OrdersView],
-    users: assignableUsersDummyData.slice(0, 2),
-    status: RoleStatus.Inactive,
-    createdAt: '2025-09-21T16:45:00.000Z',
   },
   {
     id: 'role-5',

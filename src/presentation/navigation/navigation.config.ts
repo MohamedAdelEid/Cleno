@@ -1,4 +1,5 @@
 import {
+  Building,
   Building2,
   LayoutDashboard,
   Settings,
@@ -68,9 +69,9 @@ export const navigationConfig: NavigationGroup[] = [
         permissions: [Permission.LaundryView],
       },
       {
-        titleKey: 'customers',
-        href: ROUTES.CUSTOMERS.INDEX,
-        icon: UserRound,
+        titleKey: 'companies',
+        href: ROUTES.COMPANIES.INDEX,
+        icon: Building,
         permissions: [Permission.CustomersView],
       },
     ],

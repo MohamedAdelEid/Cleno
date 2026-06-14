@@ -15,6 +15,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
     driver: {
       id: 'drv-3',
       fullName: 'Khalid Hassan',
+      email: 'khalid.hassan@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Khalid',
     },
     status: OrderStatus.OnTheWayToLaundry,
@@ -45,6 +46,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
     driver: {
       id: 'drv-1',
       fullName: 'Youssef Ali',
+      email: 'youssef.ali@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Youssef',
     },
     status: OrderStatus.InLaundry,
@@ -62,6 +64,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
     driver: {
       id: 'drv-2',
       fullName: 'Faisal Nasser',
+      email: 'faisal.nasser@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Faisal',
     },
     status: OrderStatus.ReadyForDelivery,
@@ -79,6 +82,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
     driver: {
       id: 'drv-4',
       fullName: 'Hassan Kareem',
+      email: 'hassan.kareem@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Hassan',
     },
     status: OrderStatus.Delivered,
@@ -109,6 +113,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
     driver: {
       id: 'drv-3',
       fullName: 'Khalid Hassan',
+      email: 'khalid.hassan@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Khalid',
     },
     status: OrderStatus.Delivered,
@@ -126,6 +131,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
     driver: {
       id: 'drv-1',
       fullName: 'Youssef Ali',
+      email: 'youssef.ali@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Youssef',
     },
     status: OrderStatus.OnTheWayToLaundry,

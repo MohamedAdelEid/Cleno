@@ -1,61 +1,19 @@
 import { Plus } from 'lucide-react'
 import { useMemo } from 'react'
 
-import {
-  PERMISSION_GROUPS,
-  type PermissionGroupKey,
-} from '@/domain/constants/permission-groups'
+import { PERMISSION_GROUPS } from '@/domain/constants/permission-groups'
 import type { Permission } from '@/domain/types/permission.type'
 import { AppDialog } from '@/presentation/components/feedback/app-dialog'
 import { Button } from '@/presentation/components/ui/button'
-import { PermissionGroupAccordion } from './permission-group-accordion'
+import {
+  getGroupLabel,
+  getPermissionLabel,
+  type PermissionLabels,
+} from './permission-labels'
+import { PermissionGroup } from './permission-group'
 
-export interface PermissionsDialogLabels {
-  permissionUsersView: string
-  permissionUsersCreate: string
-  permissionRolesView: string
-  permissionRolesCreate: string
-  permissionBranchesView: string
-  permissionBranchesCreate: string
-  permissionOrdersView: string
-  permissionOrdersUpdate: string
-  permissionLaundryView: string
-  permissionCustomersView: string
-  permissionSettingsView: string
-  groupUsers: string
-  groupRoles: string
-  groupBranches: string
-  groupOrders: string
-  groupLaundry: string
-  groupCustomers: string
-  groupSettings: string
-  permissionSettingsFor: string
-  groupEmpty: string
+export type PermissionsDialogLabels = PermissionLabels & {
   addPermission: string
-}
-
-const permissionLabelKey: Record<Permission, keyof PermissionsDialogLabels> = {
-  'users.view': 'permissionUsersView',
-  'users.create': 'permissionUsersCreate',
-  'roles.view': 'permissionRolesView',
-  'roles.create': 'permissionRolesCreate',
-  'branches.view': 'permissionBranchesView',
-  'branches.create': 'permissionBranchesCreate',
-  'orders.view': 'permissionOrdersView',
-  'orders.update': 'permissionOrdersUpdate',
-  'laundry.view': 'permissionLaundryView',
-  'customers.view': 'permissionCustomersView',
-  'settings.view': 'permissionSettingsView',
-}
-
-const groupLabelKey: Record<PermissionGroupKey, keyof PermissionsDialogLabels> = {
-  users: 'groupUsers',
-  roles: 'groupRoles',
-  branches: 'groupBranches',
-  orders: 'groupOrders',
-  laundry: 'groupLaundry',
-  customers: 'groupCustomers',
-  settings: 'groupSettings',
 }
 
 export interface PermissionsDialogProps {
@@ -77,26 +35,17 @@ export const PermissionsDialog = ({
   labels,
   onAddPermission,
 }: PermissionsDialogProps) => {
-  const permissionSet = useMemo(() => new Set(permissions), [permissions])
-
-  const groups = useMemo(
+  const permissionLabels = useMemo(
     () =>
-      PERMISSION_GROUPS.map((group) => ({
-        key: group.key,
-        title: labels[groupLabelKey[group.key]],
-        subtitle: labels.permissionSettingsFor.replace(
-          '{{group}}',
-          labels[groupLabelKey[group.key]],
-        ),
-        groupLabel: labels[groupLabelKey[group.key]].toUpperCase(),
-        items: group.permissions
-          .filter((permission) => permissionSet.has(permission))
-          .map((permission) => ({
+      Object.fromEntries(
+        PERMISSION_GROUPS.flatMap((group) =>
+          group.permissions.map((permission) => [
             permission,
-            label: labels[permissionLabelKey[permission]],
-          })),
-      })),
-    [labels, permissionSet],
+            getPermissionLabel(permission, labels),
+          ]),
+        ),
+      ) as Record<Permission, string>,
+    [labels],
   )
 
   return (
@@ -114,15 +63,21 @@ export const PermissionsDialog = ({
         </Button>
       }
     >
-      {groups.map((group, index) => (
-        <PermissionGroupAccordion
+      {PERMISSION_GROUPS.map((group, index) => (
+        <PermissionGroup
           key={group.key}
-          title={group.title}
-          subtitle={group.subtitle}
-          groupLabel={group.groupLabel}
-          items={group.items}
+          title={getGroupLabel(group.key, labels)}
+          subtitle={labels.permissionSettingsFor.replace(
+            '{{group}}',
+            getGroupLabel(group.key, labels),
+          )}
+          permissions={group.permissions}
+          permissionLabels={permissionLabels}
+          selectedPermissions={permissions}
+          selectAllLabel={labels.selectAll}
           emptyLabel={labels.groupEmpty}
           defaultOpen={index === 0}
+          readOnly
         />
       ))}
     </AppDialog>

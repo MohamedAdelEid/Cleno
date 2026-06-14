@@ -10,6 +10,7 @@ export interface PageHeaderProps {
   title: string
   description?: string
   icon?: LucideIcon
+  iconClassName?: string
   action?: ReactNode
   className?: string
   index?: number
@@ -19,6 +20,7 @@ export const PageHeader = ({
   title,
   description,
   icon: Icon,
+  iconClassName,
   action,
   className,
   index = 0,
@@ -28,15 +30,23 @@ export const PageHeader = ({
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.38, ease: HEADER_EASE, delay: index * 0.05 }}
     className={cn(
-      'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between',
+      'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
       className,
     )}
   >
     <div className="space-y-1.5">
       <div className="flex items-center gap-2.5">
         {Icon && (
-          <span className="flex size-9 items-center justify-center rounded-xl border border-border/80 bg-muted/40">
-            <Icon className="size-4 text-muted-foreground" strokeWidth={1.75} />
+          <span
+            className={cn(
+              'flex size-9 items-center justify-center rounded-xl border border-border/80 bg-muted/40',
+              iconClassName,
+            )}
+          >
+            <Icon
+              className={cn('size-4', iconClassName ? 'text-current' : 'text-muted-foreground')}
+              strokeWidth={1.75}
+            />
           </span>
         )}
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>

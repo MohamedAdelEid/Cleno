@@ -6,6 +6,7 @@ export interface RoleMember {
   fullName: string
   email: string
   avatarUrl: string | null
+  status: RoleStatus
 }
 
 export interface ManagedRole {

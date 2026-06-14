@@ -46,7 +46,7 @@ export const DashboardPanelCard = ({
 
     <div
       className={cn(
-        'mx-2 mb-2 min-w-0 rounded-lg border border-border/60 bg-background',
+        'mx-2 mb-2 min-w-0 flex-1 rounded-lg border border-border/60 bg-background',
         innerClassName,
       )}
     >

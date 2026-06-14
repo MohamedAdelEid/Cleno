@@ -33,7 +33,6 @@ export const DashboardContent = ({
       >
         <SidebarToggleIcon className="size-5" />
       </button>
-      <DashboardBreadcrumb className="min-w-0 flex-1" />
       <div className="ms-auto flex shrink-0 items-center gap-2">
         <ThemeToggle />
         <LanguageToggle />
@@ -48,6 +47,6 @@ export const DashboardContent = ({
       </div>
     </header>
 
-    <main className={cn('min-h-0 flex-1 p-4 md:p-6', smoothScrollClass)}>{children}</main>
+    <main className={cn('min-h-0 flex-1 px-4 md:px-6 my-4 md:my-6', smoothScrollClass)}>{children}</main>
   </div>
 )
