@@ -211,7 +211,7 @@ export const laundryOrders: LaundryOrder[] = [
     pickupTime: hoursAgo(12),
     deliverBy: hoursFromNow(3),
     inLaundrySince: hoursAgo(8),
-    driver: availableDrivers[0],
+    driver: availableDrivers[0] ?? null,
     incidents: [],
     notes: [],
     slaDeadline: hoursFromNow(3),
@@ -271,7 +271,7 @@ export const laundryOrders: LaundryOrder[] = [
     pickupTime: hoursAgo(20),
     deliverBy: hoursAgo(2),
     inLaundrySince: hoursAgo(14),
-    driver: availableDrivers[2],
+    driver: availableDrivers[2] ?? null,
     incidents: [
       { id: 'inc-6', type: 'Driver Change', content: 'Driver reassigned due to route change', createdAt: hoursAgo(3), author: 'Dispatch', stage: LaundryWorkflowStage.ReadyForDelivery, replies: [
         { id: 'rep-2', content: 'New driver confirmed ETA 30 min', createdAt: hoursAgo(2), author: 'Dispatch' },

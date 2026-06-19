@@ -29,9 +29,11 @@ interface OrderIncidentTriggerProps {
 export const OrderIncidentTrigger = ({ order, className }: OrderIncidentTriggerProps) => {
   const navigate = useNavigate()
   const count = order.incidents.length
-  const latest = order.incidents[count - 1]
 
   if (count === 0) return null
+
+  const latest = order.incidents[count - 1]
+  if (!latest) return null
 
   const handleClick = () => {
     navigate(buildLaundryIncidentsPath(order.id))

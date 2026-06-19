@@ -212,11 +212,10 @@ const BoardColumn = ({
             <p className="mt-2 text-xs text-muted-foreground/60">No orders</p>
           </div>
         ) : (
-          columnOrders.map((order, index) => (
+          columnOrders.map((order) => (
             <DraggableOrderCard
               key={order.id}
               order={order}
-              index={index}
               selected={selectedIds.has(order.id)}
               cardLabels={cardLabels}
               onSelectChange={onSelectChange}
@@ -235,7 +234,6 @@ const BoardColumn = ({
 
 interface DraggableOrderCardProps {
   order: LaundryOrder
-  index: number
   selected: boolean
   cardLabels: OrderCardLabels
   onSelectChange: (orderId: string, selected: boolean) => void
@@ -248,7 +246,6 @@ interface DraggableOrderCardProps {
 
 const DraggableOrderCard = ({
   order,
-  index,
   selected,
   cardLabels,
   onSelectChange,

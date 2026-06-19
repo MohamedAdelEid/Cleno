@@ -148,11 +148,14 @@ export const useLaundryDashboard = () => {
     const stages = new Set(selectedOrders.map((o) => o.stage))
 
     if (stages.size !== 1) {
-      notify.error(t('toastMixedStages'))
+      notify.error({ title: t('toastMixedStages') })
       return
     }
 
-    const stage = selectedOrders[0].stage
+    const firstOrder = selectedOrders[0]
+    if (!firstOrder) return
+
+    const stage = firstOrder.stage
     setStageActionTarget({ type: 'bulk', orderIds: ids, stage })
   }, [selectedIds, orders, t])
 
@@ -177,13 +180,15 @@ export const useLaundryDashboard = () => {
             ? 'toastOrderReadyDesc'
             : 'toastOrderDispatchedDesc'
 
-      notify.success(t(toastKey), {
+      notify.success({
+        title: t(toastKey),
         description: t(toastDescKey).replace('{{orderNumber}}', order.orderNumber),
       })
     } else {
       const { orderIds, stage } = stageActionTarget
       orderIds.forEach((id) => advanceOrder(id, stage))
-      notify.success(t('toastBulkSuccess'), {
+      notify.success({
+        title: t('toastBulkSuccess'),
         description: t('toastBulkSuccessDesc').replace('{{count}}', String(orderIds.length)),
       })
       clearSelection()
@@ -225,7 +230,8 @@ export const useLaundryDashboard = () => {
 
     const order = orders.find((o) => o.id === orderId)
     if (order) {
-      notify.success(t('toastDriverAssigned'), {
+      notify.success({
+        title: t('toastDriverAssigned'),
         description: t('toastDriverAssignedDesc')
           .replace('{{driver}}', driver.fullName)
           .replace('{{orderNumber}}', order.orderNumber),
@@ -235,6 +241,7 @@ export const useLaundryDashboard = () => {
 
   const handleAutoAssign = useCallback((orderId: string) => {
     const randomDriver = availableDrivers[Math.floor(Math.random() * availableDrivers.length)]
+    if (!randomDriver) return
     handleAssignDriver(orderId, randomDriver.id)
   }, [handleAssignDriver])
 
@@ -245,7 +252,7 @@ export const useLaundryDashboard = () => {
           o.id === orderId ? { ...o, bagAssignments, processingBags } : o,
         ),
       )
-      notify.success(t('toastBagsAssigned'))
+      notify.success({ title: t('toastBagsAssigned') })
     },
     [t],
   )
@@ -269,19 +276,21 @@ export const useLaundryDashboard = () => {
           : o,
       ),
     )
-    notify.success(t('toastNoteAdded'))
+    notify.success({ title: t('toastNoteAdded') })
   }, [t])
 
   const handleReceiveFirst = useCallback((order: LaundryOrder) => {
     advanceOrder(order.id, order.stage)
-    notify.success(t('toastOrderReceived'), {
+    notify.success({
+      title: t('toastOrderReceived'),
       description: t('toastOrderReceivedDesc').replace('{{orderNumber}}', order.orderNumber),
     })
   }, [advanceOrder, t])
 
   const handleDispatchFirst = useCallback((order: LaundryOrder) => {
     advanceOrder(order.id, order.stage)
-    notify.success(t('toastOrderDispatched'), {
+    notify.success({
+      title: t('toastOrderDispatched'),
       description: t('toastOrderDispatchedDesc').replace('{{orderNumber}}', order.orderNumber),
     })
   }, [advanceOrder, t])
