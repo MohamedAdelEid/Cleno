@@ -1,9 +1,7 @@
 import axios from 'axios'
 import { appConfig } from '@/infrastructure/config/app.config'
-import { onRequestFulfilled } from './request.interceptor'
-import { onResponseFulfilled, onResponseRejected } from './response.interceptor'
 
-export const httpClient = axios.create({
+export const axiosInstance = axios.create({
   baseURL: appConfig.api.baseUrl,
   timeout: appConfig.api.timeout,
   headers: {
@@ -11,6 +9,3 @@ export const httpClient = axios.create({
     Accept: 'application/json',
   },
 })
-
-httpClient.interceptors.request.use(onRequestFulfilled)
-httpClient.interceptors.response.use(onResponseFulfilled, onResponseRejected)

@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/presentation/components/ui/button'
+import { useFileUpload } from '@/presentation/hooks/use-file-upload'
 import { cn } from '@/presentation/utils'
 import { FileUploadPreviewItem } from './file-upload-preview-item'
 import type { FilePreviewItem, FileUploadProps } from './types'
@@ -30,6 +31,14 @@ export const FileUpload = ({
   labels,
   existingPreviewUrl,
   onExistingPreviewRemove,
+  autoUpload = false,
+  folder,
+  uploadedFileUrl,
+  uploadedFileName,
+  uploadedFilePath,
+  onUploadComplete,
+  onUploadError,
+  onFileRemoved,
   className,
   dropzoneClassName,
 }: FileUploadProps) => {
@@ -37,10 +46,25 @@ export const FileUpload = ({
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showExistingPreview, setShowExistingPreview] = useState(!!existingPreviewUrl)
+  const [pendingPreview, setPendingPreview] = useState<FilePreviewItem | null>(null)
+  const [showUploadedPreview, setShowUploadedPreview] = useState(!!uploadedFileUrl)
+
+  const { upload, remove, progress, isUploading, reset } = useFileUpload({
+    folder: folder ?? '',
+    onError: (message) => {
+      onUploadError?.(message)
+      setPendingPreview(null)
+      onChange([])
+    },
+  })
 
   useEffect(() => {
-    setShowExistingPreview(!!existingPreviewUrl && value.length === 0)
-  }, [existingPreviewUrl, value.length])
+    setShowExistingPreview(!!existingPreviewUrl && value.length === 0 && !uploadedFileUrl)
+  }, [existingPreviewUrl, uploadedFileUrl, value.length])
+
+  useEffect(() => {
+    setShowUploadedPreview(!!uploadedFileUrl && value.length === 0 && !pendingPreview)
+  }, [pendingPreview, uploadedFileUrl, value.length])
 
   const previewItems = useMemo(() => value.map(createPreviewItem), [value])
 
@@ -49,8 +73,11 @@ export const FileUpload = ({
       previewItems.forEach((item) => {
         if (!item.isRemote) URL.revokeObjectURL(item.previewUrl)
       })
+      if (pendingPreview && !pendingPreview.isRemote) {
+        URL.revokeObjectURL(pendingPreview.previewUrl)
+      }
     },
-    [previewItems],
+    [pendingPreview, previewItems],
   )
 
   const validateFiles = useCallback(
@@ -81,12 +108,43 @@ export const FileUpload = ({
     [accept, maxFiles, maxSize, multiple],
   )
 
+  const startAutoUpload = useCallback(
+    async (file: File) => {
+      if (!folder) {
+        onUploadError?.('Upload folder is required')
+        return
+      }
+
+      setShowExistingPreview(false)
+      setShowUploadedPreview(false)
+      setPendingPreview(createPreviewItem(file))
+      onChange([])
+
+      const result = await upload(file)
+      if (result) {
+        onUploadComplete?.(result)
+        setPendingPreview(null)
+        setShowUploadedPreview(true)
+        onChange([])
+      }
+    },
+    [folder, onChange, onUploadComplete, onUploadError, upload],
+  )
+
   const handleFiles = useCallback(
     (fileList: FileList | null) => {
-      if (!fileList?.length || disabled) return
+      if (!fileList?.length || disabled || isUploading) return
 
       const incoming = validateFiles(Array.from(fileList))
       if (!incoming.length) return
+
+      if (autoUpload && !multiple) {
+        const file = incoming[0]
+        if (file) {
+          void startAutoUpload(file)
+        }
+        return
+      }
 
       if (multiple) {
         onChange([...value, ...incoming].slice(0, maxFiles))
@@ -95,8 +153,19 @@ export const FileUpload = ({
 
       onChange(incoming)
       setShowExistingPreview(false)
+      setShowUploadedPreview(false)
     },
-    [disabled, maxFiles, multiple, onChange, validateFiles, value],
+    [
+      autoUpload,
+      disabled,
+      isUploading,
+      maxFiles,
+      multiple,
+      onChange,
+      startAutoUpload,
+      validateFiles,
+      value,
+    ],
   )
 
   const handleRemove = (index: number) => {
@@ -112,10 +181,56 @@ export const FileUpload = ({
     onExistingPreviewRemove?.()
   }
 
-  const hasPreview = previewItems.length > 0 || (showExistingPreview && !!existingPreviewUrl)
+  const handleRemoveUploaded = async () => {
+    const path = uploadedFilePath
+    if (path) {
+      const deleted = await remove(path)
+      if (!deleted) return
+      onFileRemoved?.(path)
+    }
+
+    reset()
+    setShowUploadedPreview(false)
+    if (existingPreviewUrl) {
+      setShowExistingPreview(true)
+    }
+  }
+
+  const handleRemovePending = () => {
+    if (pendingPreview && !pendingPreview.isRemote) {
+      URL.revokeObjectURL(pendingPreview.previewUrl)
+    }
+    setPendingPreview(null)
+    reset()
+    if (uploadedFileUrl) {
+      setShowUploadedPreview(true)
+    } else if (existingPreviewUrl) {
+      setShowExistingPreview(true)
+    }
+  }
+
+  const hasPreview =
+    previewItems.length > 0 ||
+    !!pendingPreview ||
+    (showExistingPreview && !!existingPreviewUrl) ||
+    (showUploadedPreview && !!uploadedFileUrl)
+
+  const maxSizeLabel = `${Math.round(maxSize / (1024 * 1024))}MB`
   const hint = labels.dragHint
     .replace('{{maxFiles}}', String(multiple ? maxFiles : 1))
-    .replace('{{maxSize}}', '5MB')
+    .replace('{{maxSize}}', maxSizeLabel)
+
+  const uploadedPreviewItem: FilePreviewItem | null =
+    showUploadedPreview && uploadedFileUrl
+      ? {
+          id: uploadedFilePath ?? uploadedFileUrl,
+          previewUrl: uploadedFileUrl,
+          name: uploadedFileName ?? labels.existingFile,
+          size: 0,
+          isImage: uploadedFileUrl.match(/\.(png|jpe?g|gif|webp|svg)$/i) != null,
+          isRemote: true,
+        }
+      : null
 
   return (
     <div className={cn('w-full', className)}>
@@ -124,7 +239,7 @@ export const FileUpload = ({
         onDragEnter={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          if (!disabled) setIsDragging(true)
+          if (!disabled && !isUploading) setIsDragging(true)
         }}
         onDragOver={(event) => {
           event.preventDefault()
@@ -153,7 +268,7 @@ export const FileUpload = ({
         className={cn(
           'relative flex w-full flex-col items-center justify-center rounded-[10px] border border-dashed border-border px-4 py-5 text-center',
           'min-h-[7.75rem]',
-          disabled && 'pointer-events-none opacity-60',
+          (disabled || isUploading) && 'pointer-events-none opacity-60',
           dropzoneClassName,
         )}
       >
@@ -164,7 +279,7 @@ export const FileUpload = ({
           className="sr-only"
           accept={accept}
           multiple={multiple}
-          disabled={disabled}
+          disabled={disabled || isUploading}
           onChange={(event) => {
             handleFiles(event.target.files)
             event.target.value = ''
@@ -186,7 +301,7 @@ export const FileUpload = ({
             variant="outline"
             size="sm"
             className="h-8 rounded-full px-4 text-xs"
-            disabled={disabled}
+            disabled={disabled || isUploading}
             onClick={() => inputRef.current?.click()}
           >
             {hasPreview ? labels.replace : labels.browse}
@@ -220,6 +335,32 @@ export const FileUpload = ({
                     removeLabel={labels.remove}
                     onRemove={handleRemoveExisting}
                     disabled={disabled}
+                  />
+                ) : null}
+
+                {uploadedPreviewItem ? (
+                  <FileUploadPreviewItem
+                    key={uploadedPreviewItem.id}
+                    item={uploadedPreviewItem}
+                    removeLabel={labels.remove}
+                    onRemove={() => void handleRemoveUploaded()}
+                    disabled={disabled}
+                    progress={100}
+                    uploadCompleteLabel={labels.uploadComplete}
+                  />
+                ) : null}
+
+                {pendingPreview ? (
+                  <FileUploadPreviewItem
+                    key={pendingPreview.id}
+                    item={pendingPreview}
+                    removeLabel={labels.remove}
+                    onRemove={handleRemovePending}
+                    disabled={disabled}
+                    progress={progress}
+                    isUploading={isUploading}
+                    uploadProgressLabel={labels.uploadProgress}
+                    uploadCompleteLabel={labels.uploadComplete}
                   />
                 ) : null}
 

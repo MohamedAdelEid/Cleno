@@ -10,7 +10,7 @@ import { useTranslation } from '@/presentation/hooks/use-translation'
 export const AddCompanyPage = () => {
   const formId = useId()
   const { t } = useTranslation('companies')
-  const { handleDiscard, handleSubmit } = useCompanyFormActions('create')
+  const { handleDiscard, handleSubmit, draftKey } = useCompanyFormActions('create')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   return (
@@ -21,7 +21,12 @@ export const AddCompanyPage = () => {
         icon={Building}
         action={
           <div className="flex shrink-0 items-center gap-2">
-            <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleDiscard()}
+              disabled={isSubmitting}
+            >
               {t('formDiscard')}
             </Button>
             <Button type="submit" form={formId} disabled={isSubmitting}>
@@ -33,6 +38,7 @@ export const AddCompanyPage = () => {
 
       <CompanyForm
         formId={formId}
+        draftKey={draftKey}
         onSubmit={handleSubmit}
         onSubmittingChange={setIsSubmitting}
       />

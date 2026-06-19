@@ -1,5 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import {
+  CircleCheck,
+  CircleOff,
+  Eye,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  XCircle,
+} from 'lucide-react'
 
 import type { ManagedCompany } from '@/domain/entities'
 import { CompanyAccountStatus } from '@/domain/enums'
@@ -12,6 +20,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/presentation/components/ui/dropdown-menu'
+import {
+  canActivateCompany,
+  canApproveCompany,
+  canDeactivateCompany,
+  canRejectCompany,
+} from '@/presentation/components/admin/companies/shared/company-actions.utils'
 import { CompanyStatusBadge } from '@/presentation/components/admin/companies/shared'
 import { CompanyCell } from './company-cell'
 
@@ -29,10 +43,13 @@ export interface CompaniesColumnLabels {
   statusPendingAdminApproval: string
   statusApproved: string
   statusRejected: string
-  statusSuspended: string
   view: string
   edit: string
   delete: string
+  approve: string
+  reject: string
+  activate: string
+  deactivate: string
 }
 
 const statusLabelKey: Record<CompanyAccountStatus, keyof CompaniesColumnLabels> = {
@@ -40,7 +57,6 @@ const statusLabelKey: Record<CompanyAccountStatus, keyof CompaniesColumnLabels> 
   [CompanyAccountStatus.PendingAdminApproval]: 'statusPendingAdminApproval',
   [CompanyAccountStatus.Approved]: 'statusApproved',
   [CompanyAccountStatus.Rejected]: 'statusRejected',
-  [CompanyAccountStatus.Suspended]: 'statusSuspended',
 }
 
 const formatCurrency = (amount: number, locale: string) =>
@@ -57,6 +73,10 @@ export const createCompaniesColumns = (
     onViewClick?: (company: ManagedCompany) => void
     onEditClick?: (company: ManagedCompany) => void
     onDeleteClick?: (company: ManagedCompany) => void
+    onApproveClick?: (company: ManagedCompany) => void
+    onRejectClick?: (company: ManagedCompany) => void
+    onActivateClick?: (company: ManagedCompany) => void
+    onDeactivateClick?: (company: ManagedCompany) => void
   },
 ): ColumnDef<ManagedCompany>[] => [
   {
@@ -168,6 +188,11 @@ export const createCompaniesColumns = (
     enableHiding: false,
     cell: ({ row }) => {
       const company = row.original
+      const showApprove = canApproveCompany(company)
+      const showReject = canRejectCompany(company)
+      const showActivate = canActivateCompany(company)
+      const showDeactivate = canDeactivateCompany(company)
+      const showStatusActions = showApprove || showReject || showActivate || showDeactivate
 
       return (
         <DropdownMenu>
@@ -177,7 +202,7 @@ export const createCompaniesColumns = (
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => options.onViewClick?.(company)}>
               <Eye />
               {labels.view}
@@ -186,6 +211,40 @@ export const createCompaniesColumns = (
               <Pencil />
               {labels.edit}
             </DropdownMenuItem>
+
+            {showStatusActions ? <DropdownMenuSeparator /> : null}
+
+            {showApprove ? (
+              <DropdownMenuItem onClick={() => options.onApproveClick?.(company)}>
+                <CircleCheck />
+                {labels.approve}
+              </DropdownMenuItem>
+            ) : null}
+
+            {showReject ? (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => options.onRejectClick?.(company)}
+              >
+                <XCircle />
+                {labels.reject}
+              </DropdownMenuItem>
+            ) : null}
+
+            {showActivate ? (
+              <DropdownMenuItem onClick={() => options.onActivateClick?.(company)}>
+                <CircleCheck />
+                {labels.activate}
+              </DropdownMenuItem>
+            ) : null}
+
+            {showDeactivate ? (
+              <DropdownMenuItem onClick={() => options.onDeactivateClick?.(company)}>
+                <CircleOff />
+                {labels.deactivate}
+              </DropdownMenuItem>
+            ) : null}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"

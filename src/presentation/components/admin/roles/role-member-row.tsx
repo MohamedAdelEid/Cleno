@@ -3,13 +3,15 @@ import { RoleStatus } from '@/domain/enums'
 import { Avatar, AvatarFallback, AvatarImage } from '@/presentation/components/ui/avatar'
 import { RoleStatusBadge } from './role-status-badge'
 
-const getInitials = (name: string) =>
-  name
+const getInitials = (name: string, fallback?: string) => {
+  if (fallback) return fallback
+  return name
     .split(' ')
     .map((part) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase()
+}
 
 interface RoleMemberRowLabels {
   statusActive: string
@@ -26,7 +28,7 @@ export const RoleMemberRow = ({ member, labels }: RoleMemberRowProps) => (
     <Avatar size="sm">
       <AvatarImage src={member.avatarUrl ?? undefined} alt={member.fullName} />
       <AvatarFallback className="bg-muted text-[10px] font-medium text-muted-foreground">
-        {getInitials(member.fullName)}
+        {getInitials(member.fullName, member.initials)}
       </AvatarFallback>
     </Avatar>
 

@@ -17,7 +17,7 @@ export const EditCompanyPage = () => {
   const formId = useId()
   const { companyId } = useParams<{ companyId: string }>()
   const { t } = useTranslation('companies')
-  const { handleDiscard, handleSubmit } = useCompanyFormActions('edit')
+  const { handleDiscard, handleSubmit, draftKey } = useCompanyFormActions('edit', companyId)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const company = companiesDummyData.find((item) => item.id === companyId)
@@ -35,7 +35,12 @@ export const EditCompanyPage = () => {
         icon={Building}
         action={
           <div className="flex shrink-0 items-center gap-2">
-            <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleDiscard()}
+              disabled={isSubmitting}
+            >
               {t('formDiscard')}
             </Button>
             <Button type="submit" form={formId} disabled={isSubmitting}>
@@ -48,6 +53,7 @@ export const EditCompanyPage = () => {
       <CompanyForm
         formId={formId}
         mode="edit"
+        draftKey={draftKey}
         defaultValues={mapCompanyToFormValues(company)}
         existingLogoUrl={existingLogoUrl}
         onExistingLogoRemove={() => setExistingLogoUrl(null)}

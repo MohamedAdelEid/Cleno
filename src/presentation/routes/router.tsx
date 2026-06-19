@@ -11,6 +11,7 @@ import {
   CompaniesPage,
   EditCompanyPage,
 } from '@/presentation/pages/admin/companies'
+import { LaundryOperationsPage, LaundryIncidentsPage } from '@/presentation/pages/admin/laundry'
 import { DashboardPlaceholderPage } from '@/presentation/pages/dashboard/dashboard-placeholder-page'
 import { NotFoundPage } from '@/presentation/pages/not-found-page'
 import { PublicRoute } from './public-route'
@@ -66,7 +67,11 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.LAUNDRY.INDEX,
-        element: <DashboardPlaceholderPage title="Laundry" />,
+        element: <LaundryOperationsPage />,
+      },
+      {
+        path: ROUTES.LAUNDRY.INCIDENTS,
+        element: <LaundryIncidentsPage />,
       },
       {
         path: ROUTES.COMPANIES.INDEX,

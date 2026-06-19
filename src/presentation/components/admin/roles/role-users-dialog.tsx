@@ -6,16 +6,19 @@ import { ConfirmDialog } from '@/presentation/components/feedback/confirm-dialog
 import { AppDialog } from '@/presentation/components/feedback/app-dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/presentation/components/ui/avatar'
 import { Button } from '@/presentation/components/ui/button'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 
 const ROW_EASE = [0.25, 0.1, 0.25, 1] as const
 
-const getInitials = (name: string) =>
-  name
+const getInitials = (name: string, fallback?: string) => {
+  if (fallback) return fallback
+  return name
     .split(' ')
     .map((part) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase()
+}
 
 export interface RoleUsersDialogLabels {
   title: string
@@ -31,6 +34,7 @@ interface RoleUsersDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   role: ManagedRole | null
+  isLoading?: boolean
   labels: RoleUsersDialogLabels
   onUnassign?: (roleId: string, userId: string) => void
 }
@@ -39,6 +43,7 @@ export const RoleUsersDialog = ({
   open,
   onOpenChange,
   role,
+  isLoading = false,
   labels,
   onUnassign,
 }: RoleUsersDialogProps) => {
@@ -61,7 +66,12 @@ export const RoleUsersDialog = ({
         size="md"
         bodyClassName="space-y-2"
       >
-        {role?.users.map((user, index) => (
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-14 w-full rounded-xl" />
+          ))
+        ) : (
+          role?.users.map((user, index) => (
           <motion.div
             key={user.id}
             initial={{ opacity: 0, y: 8 }}
@@ -71,7 +81,9 @@ export const RoleUsersDialog = ({
           >
             <Avatar size="sm">
               <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName} />
-              <AvatarFallback className="text-[10px]">{getInitials(user.fullName)}</AvatarFallback>
+              <AvatarFallback className="text-[10px]">
+                {getInitials(user.fullName, user.initials)}
+              </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{user.fullName}</p>
@@ -81,7 +93,8 @@ export const RoleUsersDialog = ({
               {labels.unassign}
             </Button>
           </motion.div>
-        ))}
+          ))
+        )}
       </AppDialog>
 
       <ConfirmDialog

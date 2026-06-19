@@ -2,20 +2,23 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import type { Permission } from '@/domain/types/permission.type'
 import { Checkbox } from '@/presentation/components/ui/checkbox'
 import { cn } from '@/presentation/utils'
 import { PermissionCheckbox } from './permission-checkbox'
 
 const ACCORDION_EASE = [0.25, 0.1, 0.25, 1] as const
 
+export interface PermissionOption {
+  id: string
+  label: string
+}
+
 interface PermissionGroupProps {
   title: string
   subtitle: string
-  permissions: Permission[]
-  permissionLabels: Record<Permission, string>
-  selectedPermissions: Permission[]
-  onChange?: (permissions: Permission[]) => void
+  items: PermissionOption[]
+  selectedIds: string[]
+  onChange?: (ids: string[]) => void
   selectAllLabel: string
   emptyLabel: string
   defaultOpen?: boolean
@@ -23,9 +26,8 @@ interface PermissionGroupProps {
 }
 
 export const PermissionGroup = ({
-  permissions,
-  permissionLabels,
-  selectedPermissions,
+  items,
+  selectedIds,
   onChange,
   title,
   subtitle,
@@ -36,24 +38,21 @@ export const PermissionGroup = ({
 }: PermissionGroupProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
-  const selectedSet = useMemo(() => new Set(selectedPermissions), [selectedPermissions])
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
-  const visiblePermissions = readOnly
-    ? permissions.filter((permission) => selectedSet.has(permission))
-    : permissions
+  const visibleItems = readOnly ? items.filter((item) => selectedSet.has(item.id)) : items
 
-  const allSelected =
-    permissions.length > 0 && permissions.every((permission) => selectedSet.has(permission))
-  const someSelected = permissions.some((permission) => selectedSet.has(permission))
+  const allSelected = items.length > 0 && items.every((item) => selectedSet.has(item.id))
+  const someSelected = items.some((item) => selectedSet.has(item.id))
 
-  const handleTogglePermission = (permission: Permission, checked: boolean) => {
+  const handleToggle = (id: string, checked: boolean) => {
     if (readOnly || !onChange) return
 
     const next = new Set(selectedSet)
     if (checked) {
-      next.add(permission)
+      next.add(id)
     } else {
-      next.delete(permission)
+      next.delete(id)
     }
     onChange(Array.from(next))
   }
@@ -62,11 +61,11 @@ export const PermissionGroup = ({
     if (readOnly || !onChange) return
 
     const next = new Set(selectedSet)
-    permissions.forEach((permission) => {
+    items.forEach((item) => {
       if (checked) {
-        next.add(permission)
+        next.add(item.id)
       } else {
-        next.delete(permission)
+        next.delete(item.id)
       }
     })
     onChange(Array.from(next))
@@ -104,7 +103,7 @@ export const PermissionGroup = ({
             className="overflow-hidden"
           >
             <div className="border-t border-border/60 px-4 py-4">
-              {!readOnly && permissions.length > 0 ? (
+              {!readOnly && items.length > 0 ? (
                 <div className="mb-4 flex px-1">
                   <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
                     <Checkbox
@@ -116,16 +115,16 @@ export const PermissionGroup = ({
                 </div>
               ) : null}
 
-              {visiblePermissions.length ? (
+              {visibleItems.length ? (
                 <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
-                  {visiblePermissions.map((permission, index) => (
+                  {visibleItems.map((item, index) => (
                     <PermissionCheckbox
-                      key={permission}
-                      permission={permission}
-                      label={permissionLabels[permission]}
-                      checked={selectedSet.has(permission)}
+                      key={item.id}
+                      id={item.id}
+                      label={item.label}
+                      checked={selectedSet.has(item.id)}
                       disabled={readOnly}
-                      onCheckedChange={(checked) => handleTogglePermission(permission, checked)}
+                      onCheckedChange={(checked) => handleToggle(item.id, checked)}
                       index={index}
                     />
                   ))}

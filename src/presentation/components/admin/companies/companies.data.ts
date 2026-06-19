@@ -1,7 +1,17 @@
 import type { ManagedCompany } from '@/domain/entities'
 import { CompanyAccountStatus } from '@/domain/enums'
 
-export const companiesDummyData: ManagedCompany[] = [
+const withCompanyDefaults = (
+  company: Omit<ManagedCompany, 'slug' | 'commercialRegistration' | 'branches'> &
+    Partial<Pick<ManagedCompany, 'slug' | 'commercialRegistration' | 'branches'>>,
+): ManagedCompany => ({
+  slug: company.slug ?? '',
+  commercialRegistration: company.commercialRegistration ?? '',
+  branches: company.branches ?? [],
+  ...company,
+})
+
+const rawCompaniesDummyData = [
   {
     id: 'co-1',
     name: 'Gulf Hospitality Group',
@@ -108,7 +118,7 @@ export const companiesDummyData: ManagedCompany[] = [
     completedOrders: 94,
     pendingInvoices: 0,
     outstandingBalance: 0,
-    status: CompanyAccountStatus.Suspended,
+    status: CompanyAccountStatus.Rejected,
     isActive: false,
     createdAt: '2024-08-05T14:20:00.000Z',
   },
@@ -266,4 +276,6 @@ export const companiesDummyData: ManagedCompany[] = [
     isActive: false,
     createdAt: '2025-03-04T15:40:00.000Z',
   },
-]
+] as const
+
+export const companiesDummyData: ManagedCompany[] = rawCompaniesDummyData.map(withCompanyDefaults)

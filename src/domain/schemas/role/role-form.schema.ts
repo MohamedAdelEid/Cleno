@@ -1,13 +1,6 @@
 import { z } from 'zod'
 
-import { Permission } from '@/domain/constants/permissions'
 import { RoleStatus } from '@/domain/enums'
-import type { Permission as PermissionType } from '@/domain/types/permission.type'
-
-const permissionValues = Object.values(Permission) as [
-  PermissionType,
-  ...PermissionType[],
-]
 
 const roleStatusValues = [RoleStatus.Active, RoleStatus.Inactive] as [
   RoleStatus,
@@ -37,9 +30,7 @@ export const createRoleFormSchema = (messages: {
       .min(10, messages.descriptionMin)
       .max(500, messages.descriptionMax),
     status: z.enum(roleStatusValues),
-    permissions: z
-      .array(z.enum(permissionValues))
-      .min(1, messages.permissionsRequired),
+    permissionIds: z.array(z.string().uuid()).min(1, messages.permissionsRequired),
   })
 
 export type RoleFormValues = z.infer<ReturnType<typeof createRoleFormSchema>>
@@ -48,5 +39,5 @@ export const emptyRoleFormValues: RoleFormValues = {
   name: '',
   description: '',
   status: RoleStatus.Active,
-  permissions: [],
+  permissionIds: [],
 }

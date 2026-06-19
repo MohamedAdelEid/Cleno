@@ -54,3 +54,34 @@ export const getPermissionLabel = (permission: Permission, labels: PermissionLab
 
 export const getGroupLabel = (groupKey: PermissionGroupKey, labels: PermissionLabels) =>
   labels[groupLabelKey[groupKey]]
+
+type TranslateFn = (key: string) => string
+
+export const buildPermissionLabels = (t: TranslateFn): PermissionLabels => ({
+  permissionUsersView: t('permissionUsersView'),
+  permissionUsersCreate: t('permissionUsersCreate'),
+  permissionRolesView: t('permissionRolesView'),
+  permissionRolesCreate: t('permissionRolesCreate'),
+  permissionBranchesView: t('permissionBranchesView'),
+  permissionBranchesCreate: t('permissionBranchesCreate'),
+  permissionOrdersView: t('permissionOrdersView'),
+  permissionOrdersUpdate: t('permissionOrdersUpdate'),
+  permissionLaundryView: t('permissionLaundryView'),
+  permissionCustomersView: t('permissionCustomersView'),
+  permissionSettingsView: t('permissionSettingsView'),
+  groupUsers: t('groupUsers'),
+  groupRoles: t('groupRoles'),
+  groupBranches: t('groupBranches'),
+  groupOrders: t('groupOrders'),
+  groupLaundry: t('groupLaundry'),
+  groupCustomers: t('groupCustomers'),
+  groupSettings: t('groupSettings'),
+  permissionSettingsFor: t('permissionSettingsFor'),
+  groupEmpty: t('groupEmpty'),
+  selectAll: t('selectAll'),
+})
+
+export const buildPermissionDialogLabels = (t: TranslateFn) => ({
+  ...buildPermissionLabels(t),
+  addPermission: t('addPermission'),
+})

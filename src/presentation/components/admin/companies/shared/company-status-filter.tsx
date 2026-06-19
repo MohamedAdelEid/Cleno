@@ -16,7 +16,6 @@ export interface CompanyStatusFilterLabels {
   statusPendingAdminApproval: string
   statusApproved: string
   statusRejected: string
-  statusSuspended: string
 }
 
 interface CompanyStatusFilterProps {
@@ -40,7 +39,6 @@ const statusOptions: Array<{
   },
   { value: CompanyAccountStatus.Approved, labelKey: 'statusApproved' },
   { value: CompanyAccountStatus.Rejected, labelKey: 'statusRejected' },
-  { value: CompanyAccountStatus.Suspended, labelKey: 'statusSuspended' },
 ]
 
 export const CompanyStatusFilter = ({ value, onChange, labels }: CompanyStatusFilterProps) => {

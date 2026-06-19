@@ -1,2 +1,1 @@
-export * from './auth.endpoints'
-export * from './user.endpoints'
+export { API_ENDPOINTS } from './endpoints'

@@ -1,3 +1,5 @@
+import type { UploadedFile } from '@/domain/types'
+
 export interface FileUploadLabels {
   dragTitle: string
   dragHint: string
@@ -8,6 +10,8 @@ export interface FileUploadLabels {
   invalidType: string
   maxSize: string
   maxFiles: string
+  uploadProgress?: string
+  uploadComplete?: string
 }
 
 export interface FileUploadProps {
@@ -21,6 +25,14 @@ export interface FileUploadProps {
   labels: FileUploadLabels
   existingPreviewUrl?: string | null
   onExistingPreviewRemove?: () => void
+  autoUpload?: boolean
+  folder?: string
+  uploadedFileUrl?: string | null
+  uploadedFileName?: string | null
+  uploadedFilePath?: string | null
+  onUploadComplete?: (result: UploadedFile) => void
+  onUploadError?: (message: string) => void
+  onFileRemoved?: (filePath: string) => void
   className?: string
   dropzoneClassName?: string
 }

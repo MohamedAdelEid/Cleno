@@ -71,9 +71,11 @@ export const PermissionsDialog = ({
             '{{group}}',
             getGroupLabel(group.key, labels),
           )}
-          permissions={group.permissions}
-          permissionLabels={permissionLabels}
-          selectedPermissions={permissions}
+          items={group.permissions.map((permission) => ({
+            id: permission,
+            label: permissionLabels[permission],
+          }))}
+          selectedIds={permissions}
           selectAllLabel={labels.selectAll}
           emptyLabel={labels.groupEmpty}
           defaultOpen={index === 0}

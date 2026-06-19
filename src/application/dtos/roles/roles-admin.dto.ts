@@ -1,0 +1,59 @@
+export interface RoleUserDto {
+  id: string
+  fullName: string
+  email: string
+  initials: string
+  isActive: boolean
+}
+
+export interface RoleAdminItemDto {
+  id: string
+  name: string
+  description: string | null
+  permissionsCount: number
+  usersCount: number
+  users: RoleUserDto[]
+  remainingUsersCount: number
+  isActive: boolean
+  isFeatured: boolean
+  displayOrder: number
+  createdAt: string
+}
+
+export interface RolesAdminStatsDto {
+  totalRoles: number
+  activeRoles: number
+  inactiveRoles: number
+  featuredRoles?: RoleAdminItemDto[] | string[] | null
+}
+
+export interface RolesAdminAllDataDto {
+  stats: RolesAdminStatsDto
+  items: RoleAdminItemDto[]
+}
+
+export interface RolesAdminAllParams {
+  keyword?: string
+  isActive?: boolean
+  pageNumber?: number
+  pageSize?: number
+  sortBy?: string
+  sortDirection?: 'asc' | 'desc'
+}
+
+export interface SetFeaturedRolesRequestDto {
+  roleIds: string[]
+}
+
+export interface RoleUserAssignmentRequestDto {
+  roleId: string
+  userIds: string[]
+}
+
+export interface RoleAvailableUsersParams {
+  keyword?: string
+  pageNumber?: number
+  pageSize?: number
+  sortBy?: string
+  sortDirection?: 'asc' | 'desc'
+}

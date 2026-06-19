@@ -9,3 +9,4 @@ export {
 } from './permission-labels'
 export { PermissionsDialog, type PermissionsDialogLabels, type PermissionsDialogProps } from './permissions-dialog'
 export { PermissionsSection } from './permissions-section'
+export { PermissionsSkeleton } from './permissions-skeleton'

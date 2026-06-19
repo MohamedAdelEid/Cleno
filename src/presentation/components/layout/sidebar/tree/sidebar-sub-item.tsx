@@ -156,7 +156,7 @@ export const SidebarSubItem = ({
             'focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none',
             isActive
               ? 'text-primary'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground',
+              : 'text-sidebar-foreground/70 hover:text-sidebar-accent-foreground',
           )}
           style={{ minHeight: SUB_NAV_TREE.ROW_HEIGHT }}
         >

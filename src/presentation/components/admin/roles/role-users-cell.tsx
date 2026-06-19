@@ -14,25 +14,35 @@ const MAX_VISIBLE = 3
 
 interface RoleUsersCellProps {
   users: RoleMember[]
+  totalCount: number
+  remainingCount: number
   moreLabel: (count: number) => string
   onMoreClick?: () => void
 }
 
-const getInitials = (name: string) =>
-  name
+const getInitials = (name: string, fallback?: string) => {
+  if (fallback) return fallback
+  return name
     .split(' ')
     .map((part) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase()
+}
 
-export const RoleUsersCell = ({ users, moreLabel, onMoreClick }: RoleUsersCellProps) => {
-  if (!users.length) {
+export const RoleUsersCell = ({
+  users,
+  totalCount,
+  remainingCount,
+  moreLabel,
+  onMoreClick,
+}: RoleUsersCellProps) => {
+  if (!totalCount) {
     return <span className="text-sm text-muted-foreground">—</span>
   }
 
   const visibleUsers = users.slice(0, MAX_VISIBLE)
-  const overflowCount = users.length - MAX_VISIBLE
+  const overflowCount = Math.max(remainingCount, totalCount - visibleUsers.length)
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -52,7 +62,7 @@ export const RoleUsersCell = ({ users, moreLabel, onMoreClick }: RoleUsersCellPr
                 >
                   <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName} />
                   <AvatarFallback className="text-[10px]">
-                    {getInitials(user.fullName)}
+                    {getInitials(user.fullName, user.initials)}
                   </AvatarFallback>
                 </Avatar>
               </motion.div>

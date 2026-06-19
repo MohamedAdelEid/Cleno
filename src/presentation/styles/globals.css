@@ -113,6 +113,12 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

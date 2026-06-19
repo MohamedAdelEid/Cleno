@@ -75,13 +75,13 @@ export const createRolesColumns = (
   },
   {
     id: 'permissions',
-    accessorFn: (row) => row.permissions.length,
+    accessorFn: (row) => row.permissionsCount,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={labels.permissions} />
     ),
     cell: ({ row }) => (
       <RolePermissionsCell
-        count={row.original.permissions.length}
+        count={row.original.permissionsCount}
         label={labels.permissionsCount}
         onClick={() => options.onPermissionsClick?.(row.original)}
       />
@@ -89,11 +89,13 @@ export const createRolesColumns = (
   },
   {
     id: 'users',
-    accessorFn: (row) => row.users.length,
+    accessorFn: (row) => row.usersCount,
     header: ({ column }) => <DataTableColumnHeader column={column} title={labels.users} />,
     cell: ({ row }) => (
       <RoleUsersCell
         users={row.original.users}
+        totalCount={row.original.usersCount}
+        remainingCount={row.original.remainingUsersCount}
         moreLabel={(count) => labels.usersMore.replace('{{count}}', String(count))}
         onMoreClick={() => options.onUsersClick?.(row.original)}
       />

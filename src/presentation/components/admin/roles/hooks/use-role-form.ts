@@ -1,10 +1,13 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { roleAdapter } from '@/application/adapters/role.adapter'
 import type { RoleFormValues } from '@/domain/schemas'
 import { notify } from '@/infrastructure/libs/toast/toast'
+import { rolesApi } from '@/infrastructure/api/roles.api'
 import { type RoleFormLabels } from '@/presentation/components/admin/roles/form'
 import { useTranslation } from '@/presentation/hooks/use-translation'
+import { buildPermissionLabels } from '@/presentation/components/admin/permissions/permission-labels'
 import { ROUTES } from '@/presentation/routes/routes.constants'
 
 export const useRoleFormLabels = (): RoleFormLabels => {
@@ -12,6 +15,7 @@ export const useRoleFormLabels = (): RoleFormLabels => {
 
   return useMemo(
     () => ({
+      ...buildPermissionLabels(t),
       addTitle: t('formAddTitle'),
       editTitle: t('formEditTitle'),
       addSubtitle: t('formAddSubtitle'),
@@ -28,6 +32,7 @@ export const useRoleFormLabels = (): RoleFormLabels => {
       permissionsTitle: t('formPermissionsTitle'),
       permissionsDescription: t('formPermissionsDescription'),
       selectAll: t('selectAll'),
+      permissionsLoadError: t('permissionsLoadError'),
       validationNameRequired: t('validationNameRequired'),
       validationNameMin: t('validationNameMin'),
       validationNameMax: t('validationNameMax'),
@@ -35,26 +40,6 @@ export const useRoleFormLabels = (): RoleFormLabels => {
       validationDescriptionMin: t('validationDescriptionMin'),
       validationDescriptionMax: t('validationDescriptionMax'),
       validationPermissionsRequired: t('validationPermissionsRequired'),
-      permissionUsersView: t('permissionUsersView'),
-      permissionUsersCreate: t('permissionUsersCreate'),
-      permissionRolesView: t('permissionRolesView'),
-      permissionRolesCreate: t('permissionRolesCreate'),
-      permissionBranchesView: t('permissionBranchesView'),
-      permissionBranchesCreate: t('permissionBranchesCreate'),
-      permissionOrdersView: t('permissionOrdersView'),
-      permissionOrdersUpdate: t('permissionOrdersUpdate'),
-      permissionLaundryView: t('permissionLaundryView'),
-      permissionCustomersView: t('permissionCustomersView'),
-      permissionSettingsView: t('permissionSettingsView'),
-      groupUsers: t('groupUsers'),
-      groupRoles: t('groupRoles'),
-      groupBranches: t('groupBranches'),
-      groupOrders: t('groupOrders'),
-      groupLaundry: t('groupLaundry'),
-      groupCustomers: t('groupCustomers'),
-      groupSettings: t('groupSettings'),
-      permissionSettingsFor: t('permissionSettingsFor'),
-      groupEmpty: t('groupEmpty'),
     }),
     [t],
   )
@@ -69,17 +54,30 @@ export const useRoleFormActions = (mode: 'create' | 'edit') => {
   }
 
   const handleSubmit = async (values: RoleFormValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    if (mode === 'create') {
+      const result = await rolesApi.create(roleAdapter.toCreateRequest(values))
 
-    notify.success({
-      title: mode === 'create' ? t('toastRoleCreated') : t('toastRoleUpdated'),
-      description:
-        mode === 'create'
-          ? t('toastRoleCreatedDesc', { name: values.name })
-          : t('toastRoleUpdatedDesc', { name: values.name }),
+      if (!result.hasValue || !result.data) {
+        notify.error({
+          title: t('toastRoleCreateFailed'),
+          description: result.error?.message ?? t('toastRoleCreateFailedDesc'),
+        })
+        return
+      }
+
+      notify.success({
+        title: t('toastRoleCreated'),
+        description: t('toastRoleCreatedDesc', { name: values.name }),
+      })
+
+      navigate(ROUTES.ROLES.INDEX)
+      return
+    }
+
+    notify.info({
+      title: t('edit'),
+      description: t('editRoleComingSoon'),
     })
-
-    navigate(ROUTES.ROLES.INDEX)
   }
 
   return { handleDiscard, handleSubmit }

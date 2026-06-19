@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Ban, CircleCheck, CircleX, Mail, ShieldCheck } from 'lucide-react'
+import { CircleCheck, CircleX, Mail, ShieldCheck } from 'lucide-react'
 
 import { CompanyAccountStatus } from '@/domain/enums'
 import { cn } from '@/presentation/utils'
@@ -32,11 +32,6 @@ const statusConfig: Record<
     icon: CircleX,
     className:
       'border-red-200/80 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-300',
-  },
-  [CompanyAccountStatus.Suspended]: {
-    icon: Ban,
-    className:
-      'border-violet-200/80 bg-violet-50 text-violet-700 dark:border-violet-800/60 dark:bg-violet-950/40 dark:text-violet-300',
   },
 }
 

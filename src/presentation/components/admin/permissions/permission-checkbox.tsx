@@ -1,13 +1,12 @@
 import { motion } from 'framer-motion'
 
-import type { Permission } from '@/domain/types/permission.type'
 import { Checkbox } from '@/presentation/components/ui/checkbox'
 import { cn } from '@/presentation/utils'
 
 const CHECK_EASE = [0.25, 0.1, 0.25, 1] as const
 
 interface PermissionCheckboxProps {
-  permission: Permission
+  id: string
   label: string
   checked: boolean
   disabled?: boolean
@@ -16,7 +15,7 @@ interface PermissionCheckboxProps {
 }
 
 export const PermissionCheckbox = ({
-  permission,
+  id,
   label,
   checked,
   disabled = false,
@@ -39,6 +38,6 @@ export const PermissionCheckbox = ({
       onCheckedChange={(value) => onCheckedChange?.(value === true)}
     />
     <span>{label}</span>
-    <span className="sr-only">{permission}</span>
+    <span className="sr-only">{id}</span>
   </motion.label>
 )

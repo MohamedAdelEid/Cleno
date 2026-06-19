@@ -50,7 +50,10 @@ export const RoleOverviewCard = ({
 }: RoleOverviewCardProps) => {
   const RoleIcon = ROLE_ICONS[role.id] ?? ShieldCheck
   const visibleUsers = role.users.slice(0, MAX_VISIBLE_USERS)
-  const hiddenUsersCount = role.users.length - MAX_VISIBLE_USERS
+  const hiddenUsersCount = Math.max(
+    role.remainingUsersCount,
+    role.usersCount - visibleUsers.length,
+  )
 
   return (
     <motion.article
@@ -120,7 +123,7 @@ export const RoleOverviewCard = ({
             className="mx-auto h-7 rounded-full px-3 text-xs text-muted-foreground"
             onClick={() => onUsersClick(role)}
           >
-            {labels.seeAllUsers.replace('{{count}}', String(role.users.length))}
+            {labels.seeAllUsers.replace('{{count}}', String(role.usersCount))}
           </Button>
         ) : null}
       </div>

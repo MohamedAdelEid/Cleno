@@ -23,6 +23,8 @@ export const ROUTES = {
   },
   LAUNDRY: {
     INDEX: '/dashboard/laundry',
+    INCIDENTS: '/dashboard/laundry/:orderId/incidents',
+    INCIDENT_DETAIL: '/dashboard/laundry/:orderId/incidents/:incidentId',
   },
   CUSTOMERS: {
     INDEX: '/dashboard/customers',

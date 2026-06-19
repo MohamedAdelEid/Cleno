@@ -6,6 +6,7 @@ export const NAMESPACES = {
   roles: 'roles',
   companies: 'companies',
   orders: 'orders',
+  laundry: 'laundry',
 } as const
 
 export type Namespace = (typeof NAMESPACES)[keyof typeof NAMESPACES]

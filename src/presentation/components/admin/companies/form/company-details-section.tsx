@@ -2,14 +2,17 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Controller, type Control } from 'react-hook-form'
 
+import type { UploadedFile } from '@/domain/types'
 import type { CompanyFormValues } from '@/domain/schemas'
 import { COMPANY_TYPE_SUGGESTIONS } from '@/presentation/components/admin/companies/companies.constants'
+import type { CompanyUploadField } from '@/presentation/components/admin/companies/form/company-form'
 import { FormSection } from '@/presentation/components/forms'
 import { Field, FieldError, FieldLabel } from '@/presentation/components/ui/field'
 import { FileUpload, type FileUploadLabels } from '@/presentation/components/ui/file-upload'
 import { Input } from '@/presentation/components/ui/input'
 import { SearchableSelect } from '@/presentation/components/ui/searchable-select'
 import { useTranslation } from '@/presentation/hooks/use-translation'
+import { UPLOAD_FOLDERS } from '@/infrastructure/utils/upload-folders'
 import { cn } from '@/presentation/utils'
 
 const SECTION_EASE = [0.25, 0.1, 0.25, 1] as const
@@ -25,6 +28,9 @@ interface CompanyDetailsSectionProps {
   mode?: 'create' | 'edit'
   existingLogoUrl?: string | null
   onExistingLogoRemove?: () => void
+  uploadedFiles: Partial<Record<CompanyUploadField, UploadedFile>>
+  onUploadedFileChange: (field: CompanyUploadField, file: UploadedFile | null) => void
+  onUploadError: (message: string) => void
 }
 
 export const CompanyDetailsSection = ({
@@ -32,6 +38,9 @@ export const CompanyDetailsSection = ({
   mode = 'create',
   existingLogoUrl,
   onExistingLogoRemove,
+  uploadedFiles,
+  onUploadedFileChange,
+  onUploadError,
 }: CompanyDetailsSectionProps) => {
   const { t } = useTranslation('companies')
 
@@ -50,6 +59,8 @@ export const CompanyDetailsSection = ({
     invalidType: t('uploadInvalidType'),
     maxSize: t('uploadMaxSize'),
     maxFiles: t('uploadMaxFiles'),
+    uploadProgress: t('uploadProgress'),
+    uploadComplete: t('uploadComplete'),
   }
 
   return (
@@ -275,8 +286,16 @@ export const CompanyDetailsSection = ({
                   onChange={field.onChange}
                   accept="image/*"
                   maxFiles={1}
+                  autoUpload
+                  folder={UPLOAD_FOLDERS.companies.logos}
                   existingPreviewUrl={existingLogoUrl}
                   onExistingPreviewRemove={onExistingLogoRemove}
+                  uploadedFileUrl={uploadedFiles.logo?.fileUrl ?? null}
+                  uploadedFileName={uploadedFiles.logo?.originalFileName ?? null}
+                  uploadedFilePath={uploadedFiles.logo?.filePath ?? null}
+                  onUploadComplete={(result) => onUploadedFileChange('logo', result)}
+                  onUploadError={onUploadError}
+                  onFileRemoved={() => onUploadedFileChange('logo', null)}
                   labels={{
                     ...uploadLabels,
                     existingFile: t('uploadExistingLogo'),
@@ -298,6 +317,18 @@ export const CompanyDetailsSection = ({
                   onChange={field.onChange}
                   accept="image/*,application/pdf,.pdf"
                   maxFiles={1}
+                  autoUpload
+                  folder={UPLOAD_FOLDERS.companies.documents}
+                  uploadedFileUrl={uploadedFiles.commercialRegistration?.fileUrl ?? null}
+                  uploadedFileName={
+                    uploadedFiles.commercialRegistration?.originalFileName ?? null
+                  }
+                  uploadedFilePath={uploadedFiles.commercialRegistration?.filePath ?? null}
+                  onUploadComplete={(result) =>
+                    onUploadedFileChange('commercialRegistration', result)
+                  }
+                  onUploadError={onUploadError}
+                  onFileRemoved={() => onUploadedFileChange('commercialRegistration', null)}
                   labels={{
                     ...uploadLabels,
                     existingFile: t('uploadExistingCommercialRegistration'),
