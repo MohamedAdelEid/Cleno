@@ -11,6 +11,7 @@ export interface PermissionLabels {
   permissionOrdersView: string
   permissionOrdersUpdate: string
   permissionLaundryView: string
+  permissionBagsView: string
   permissionCustomersView: string
   permissionSettingsView: string
   groupUsers: string
@@ -18,6 +19,7 @@ export interface PermissionLabels {
   groupBranches: string
   groupOrders: string
   groupLaundry: string
+  groupBags: string
   groupCustomers: string
   groupSettings: string
   permissionSettingsFor: string
@@ -35,6 +37,7 @@ export const permissionLabelKey: Record<Permission, keyof PermissionLabels> = {
   'orders.view': 'permissionOrdersView',
   'orders.update': 'permissionOrdersUpdate',
   'laundry.view': 'permissionLaundryView',
+  'bags.view': 'permissionBagsView',
   'customers.view': 'permissionCustomersView',
   'settings.view': 'permissionSettingsView',
 }
@@ -45,6 +48,7 @@ export const groupLabelKey: Record<PermissionGroupKey, keyof PermissionLabels> =
   branches: 'groupBranches',
   orders: 'groupOrders',
   laundry: 'groupLaundry',
+  bags: 'groupBags',
   customers: 'groupCustomers',
   settings: 'groupSettings',
 }
@@ -67,6 +71,7 @@ export const buildPermissionLabels = (t: TranslateFn): PermissionLabels => ({
   permissionOrdersView: t('permissionOrdersView'),
   permissionOrdersUpdate: t('permissionOrdersUpdate'),
   permissionLaundryView: t('permissionLaundryView'),
+  permissionBagsView: t('permissionBagsView'),
   permissionCustomersView: t('permissionCustomersView'),
   permissionSettingsView: t('permissionSettingsView'),
   groupUsers: t('groupUsers'),
@@ -74,6 +79,7 @@ export const buildPermissionLabels = (t: TranslateFn): PermissionLabels => ({
   groupBranches: t('groupBranches'),
   groupOrders: t('groupOrders'),
   groupLaundry: t('groupLaundry'),
+  groupBags: t('groupBags'),
   groupCustomers: t('groupCustomers'),
   groupSettings: t('groupSettings'),
   permissionSettingsFor: t('permissionSettingsFor'),

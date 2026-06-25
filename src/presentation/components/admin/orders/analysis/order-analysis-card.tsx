@@ -2,11 +2,11 @@ import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 
 import { OrderAnalysisInterval } from '@/domain/enums'
+import type { OrderAnalysisSummary } from '@/domain/types'
 import { DashboardPanelCard } from '@/presentation/components/dashboard/widgets/panel-card'
-import { useDirection } from '@/presentation/hooks/use-direction'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn } from '@/presentation/utils'
-import { getOrderAnalysisSummary } from './order-analysis.data'
 import { OrderAnalysisChart } from './order-analysis-chart'
 import { OrderAnalysisIntervalFilter } from './order-analysis-interval-filter'
 import { OrderAnalysisToggle, type OrderAnalysisMode } from './order-analysis-toggle'
@@ -21,12 +21,21 @@ const LEGEND_COLORS = {
 interface OrderAnalysisCardProps {
   index?: number
   className?: string
+  summary: OrderAnalysisSummary | null
+  interval: OrderAnalysisInterval
+  onIntervalChange: (interval: OrderAnalysisInterval) => void
+  isLoading?: boolean
 }
 
-export const OrderAnalysisCard = ({ index = 3, className }: OrderAnalysisCardProps) => {
+export const OrderAnalysisCard = ({
+  index = 3,
+  className,
+  summary,
+  interval,
+  onIntervalChange,
+  isLoading = false,
+}: OrderAnalysisCardProps) => {
   const { t } = useTranslation('orders')
-  const { isRtl } = useDirection()
-  const [interval, setInterval] = useState<OrderAnalysisInterval>(OrderAnalysisInterval.Monthly)
   const [mode, setMode] = useState<OrderAnalysisMode>('line')
 
   const intervalLabels = useMemo(
@@ -38,10 +47,29 @@ export const OrderAnalysisCard = ({ index = 3, className }: OrderAnalysisCardPro
     [t],
   )
 
-  const summary = useMemo(
-    () => getOrderAnalysisSummary(interval, isRtl),
-    [interval, isRtl],
-  )
+  if (isLoading && !summary) {
+    return (
+      <DashboardPanelCard
+        title={t('analysisTitle')}
+        index={index}
+        className={cn('flex flex-1 flex-col', className)}
+        innerClassName="flex flex-1 flex-col p-4 sm:p-5"
+      >
+        <div className="flex flex-1 flex-col space-y-5">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex gap-6">
+              <Skeleton className="h-12 w-24" />
+              <Skeleton className="h-12 w-24" />
+            </div>
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="min-h-[220px] flex-1 rounded-xl" />
+        </div>
+      </DashboardPanelCard>
+    )
+  }
+
+  if (!summary) return null
 
   return (
     <DashboardPanelCard
@@ -58,7 +86,7 @@ export const OrderAnalysisCard = ({ index = 3, className }: OrderAnalysisCardPro
           />
           <OrderAnalysisIntervalFilter
             value={interval}
-            onChange={setInterval}
+            onChange={onIntervalChange}
             labels={intervalLabels}
           />
         </div>

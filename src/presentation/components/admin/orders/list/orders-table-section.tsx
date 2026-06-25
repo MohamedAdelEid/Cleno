@@ -21,64 +21,103 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/presentation/components/ui/dropdown-menu'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useDirection } from '@/presentation/hooks/use-direction'
 import { useTranslation } from '@/presentation/hooks/use-translation'
-import { assignableDriversDummyData } from '../orders-table.data'
 import { AssignDriverDialog } from './assign-driver-dialog'
 import { OrderStatusFilter } from './order-status-filter'
 import { createOrdersColumns } from './orders-columns'
 
 interface OrdersTableSectionProps {
   orders: ManagedOrder[]
-  setOrders: Dispatch<SetStateAction<ManagedOrder[]>>
+  totalRows: number
+  isLoading?: boolean
+  isMutating?: boolean
+  keyword: string
+  onKeywordChange: (value: string) => void
+  statusFilter: OrderStatus | 'all'
+  onStatusFilterChange: (value: OrderStatus | 'all') => void
+  paginationState: PaginationState
+  onPaginationStateChange: Dispatch<SetStateAction<PaginationState>>
+  activeOrderSlug: string | null
+  onOrderSelect: (order: ManagedOrder) => void
+  assignableDrivers: OrderDriver[]
+  isDriversLoading?: boolean
+  onAssignDialogOpen: () => void
+  onAssignDriver: (
+    slug: string,
+    driver: OrderDriver | null,
+  ) => Promise<{ success: boolean; message?: string }>
+  onCancelOrder: (slug: string) => Promise<{ success: boolean; message?: string }>
+  onBulkUpdateStatus: (
+    slugs: string[],
+    status: OrderStatus,
+  ) => Promise<{ success: boolean; message?: string }>
+  onBulkCancel: (slugs: string[]) => Promise<{ success: boolean; message?: string }>
 }
 
-export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProps) => {
+const TableSkeleton = () => (
+  <div className="space-y-2 px-1 py-2">
+    {Array.from({ length: 5 }).map((_, index) => (
+      <div key={index} className="flex items-center gap-4 rounded-lg px-3 py-3">
+        <Skeleton className="size-4 shrink-0 rounded" />
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-32 flex-1" />
+        <Skeleton className="hidden h-4 w-20 sm:block" />
+        <Skeleton className="hidden h-4 w-20 md:block" />
+        <Skeleton className="h-4 w-8" />
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+    ))}
+  </div>
+)
+
+export const OrdersTableSection = ({
+  orders,
+  totalRows,
+  isLoading = false,
+  isMutating = false,
+  keyword,
+  onKeywordChange,
+  statusFilter,
+  onStatusFilterChange,
+  paginationState,
+  onPaginationStateChange,
+  activeOrderSlug,
+  onOrderSelect,
+  assignableDrivers,
+  isDriversLoading = false,
+  onAssignDialogOpen,
+  onAssignDriver,
+  onCancelOrder,
+  onBulkUpdateStatus,
+  onBulkCancel,
+}: OrdersTableSectionProps) => {
   const { t } = useTranslation('orders')
   const { t: tCommon } = useTranslation('common')
   const { isRtl } = useDirection()
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all')
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
-  const [paginationState, setPaginationState] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 5,
-  })
   const [deleteTarget, setDeleteTarget] = useState<'bulk' | ManagedOrder | null>(null)
   const [assignTarget, setAssignTarget] = useState<ManagedOrder | null>(null)
 
-  const filteredOrders = useMemo(() => {
-    const normalized = search.trim().toLowerCase()
-
-    return orders.filter((order) => {
-      const matchesStatus = statusFilter === 'all' || order.status === statusFilter
-      const matchesSearch =
-        !normalized ||
-        order.orderNumber.toLowerCase().includes(normalized) ||
-        order.company.name.toLowerCase().includes(normalized) ||
-        order.company.email.toLowerCase().includes(normalized) ||
-        order.company.type.toLowerCase().includes(normalized) ||
-        order.branchName.toLowerCase().includes(normalized) ||
-        order.driver?.fullName.toLowerCase().includes(normalized) ||
-        order.driver?.email.toLowerCase().includes(normalized) ||
-        order.bags.some((bag) => bag.toLowerCase().includes(normalized))
-
-      return matchesStatus && matchesSearch
-    })
-  }, [orders, search, statusFilter])
-
   const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id])
-  const selectedCount = selectedIds.length
+  const selectedOrders = useMemo(
+    () => orders.filter((order) => selectedIds.includes(order.id)),
+    [orders, selectedIds],
+  )
+  const selectedCount = selectedOrders.length
+  const selectedSlugs = useMemo(() => selectedOrders.map((order) => order.slug), [selectedOrders])
 
   const clearSelection = useCallback(() => setRowSelection({}), [])
 
-  const handleBulkStatusChange = (status: OrderStatus) => {
-    setOrders((current) =>
-      current.map((order) =>
-        selectedIds.includes(order.id) ? { ...order, status } : order,
-      ),
-    )
+  const handleBulkStatusChange = async (status: OrderStatus) => {
+    const result = await onBulkUpdateStatus(selectedSlugs, status)
+    if (!result.success) {
+      notify.error({ title: t('changeStatus'), description: result.message })
+      return
+    }
     notify.success({
       title: t('toastStatusUpdated'),
       description: t('toastStatusUpdatedDesc', { count: selectedCount }),
@@ -86,8 +125,12 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
     clearSelection()
   }
 
-  const handleBulkDelete = () => {
-    setOrders((current) => current.filter((order) => !selectedIds.includes(order.id)))
+  const handleBulkDelete = async () => {
+    const result = await onBulkCancel(selectedSlugs)
+    if (!result.success) {
+      notify.error({ title: t('delete'), description: result.message })
+      return
+    }
     notify.success({
       title: t('toastDeleted'),
       description: t('toastDeletedDesc', { count: selectedCount }),
@@ -96,8 +139,12 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
     clearSelection()
   }
 
-  const handleSingleDelete = (order: ManagedOrder) => {
-    setOrders((current) => current.filter((item) => item.id !== order.id))
+  const handleSingleDelete = async (order: ManagedOrder) => {
+    const result = await onCancelOrder(order.slug)
+    if (!result.success) {
+      notify.error({ title: t('delete'), description: result.message })
+      return
+    }
     notify.success({
       title: t('toastOrderDeleted'),
       description: t('toastOrderDeletedDesc', { id: order.orderNumber }),
@@ -105,10 +152,15 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
     setDeleteTarget(null)
   }
 
-  const handleAssignDriver = (orderId: string, driver: OrderDriver | null) => {
-    setOrders((current) =>
-      current.map((order) => (order.id === orderId ? { ...order, driver } : order)),
-    )
+  const handleAssignDriver = async (order: ManagedOrder, driver: OrderDriver | null) => {
+    const result = await onAssignDriver(order.slug, driver)
+    if (!result.success) {
+      notify.error({
+        title: driver ? t('assignDriver') : t('removeDriverAssignment'),
+        description: result.message,
+      })
+      return
+    }
     notify.success({
       title: driver ? t('toastDriverAssigned') : t('toastDriverRemoved'),
       description: driver
@@ -116,6 +168,14 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
         : t('toastDriverRemovedDesc'),
     })
   }
+
+  const openAssignDialog = useCallback(
+    (order: ManagedOrder) => {
+      onAssignDialogOpen()
+      setAssignTarget(order)
+    },
+    [onAssignDialogOpen],
+  )
 
   const columns = useMemo(
     () =>
@@ -138,30 +198,29 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
           statusInLaundry: t('statusInLaundry'),
           statusReadyForDelivery: t('statusReadyForDelivery'),
           statusDelivered: t('statusDelivered'),
+          statusCancelled: t('statusCancelled'),
         },
         {
           isRtl,
-          onOrderClick: () =>
-            notify.info({ title: t('view'), description: t('viewOrderComingSoon') }),
+          onOrderClick: onOrderSelect,
           onCompanyClick: () =>
             notify.info({ title: t('viewCompany'), description: t('viewCompanyComingSoon') }),
           onBranchClick: () =>
             notify.info({ title: t('viewBranch'), description: t('viewBranchComingSoon') }),
-          onAssignDriverClick: setAssignTarget,
-          onChangeDriverClick: setAssignTarget,
+          onAssignDriverClick: openAssignDialog,
+          onChangeDriverClick: openAssignDialog,
           onDriverClick: (order) =>
             notify.info({
               title: t('viewDriver'),
               description: order.driver?.fullName ?? '',
             }),
-          onViewClick: () =>
-            notify.info({ title: t('view'), description: t('viewOrderComingSoon') }),
+          onViewClick: onOrderSelect,
           onEditClick: () =>
             notify.info({ title: t('edit'), description: t('editOrderComingSoon') }),
           onDeleteClick: (order) => setDeleteTarget(order),
         },
       ),
-    [isRtl, t],
+    [isRtl, onOrderSelect, openAssignDialog, t],
   )
 
   const paginationLabels = useMemo(
@@ -187,8 +246,8 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
             </div>
 
             <DataTableToolbar
-              search={search}
-              onSearchChange={setSearch}
+              search={keyword}
+              onSearchChange={onKeywordChange}
               searchPlaceholder={t('searchPlaceholder')}
               endContent={
                 <>
@@ -199,38 +258,38 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
                   >
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="xs">
+                        <Button variant="outline" size="xs" disabled={isMutating}>
                           {t('changeStatus')}
                           <ChevronDown className="size-3.5 opacity-60" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => handleBulkStatusChange(OrderStatus.OrderCreated)}
+                          onClick={() => void handleBulkStatusChange(OrderStatus.OrderCreated)}
                         >
                           {t('statusOrderCreated')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
-                            handleBulkStatusChange(OrderStatus.OnTheWayToLaundry)
+                            void handleBulkStatusChange(OrderStatus.PickedUp)
                           }
                         >
                           {t('statusPickedUp')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleBulkStatusChange(OrderStatus.InLaundry)}
+                          onClick={() => void handleBulkStatusChange(OrderStatus.InLaundry)}
                         >
                           {t('statusInLaundry')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
-                            handleBulkStatusChange(OrderStatus.ReadyForDelivery)
+                            void handleBulkStatusChange(OrderStatus.ReadyForDelivery)
                           }
                         >
                           {t('statusReadyForDelivery')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleBulkStatusChange(OrderStatus.Delivered)}
+                          onClick={() => void handleBulkStatusChange(OrderStatus.Delivered)}
                         >
                           {t('statusDelivered')}
                         </DropdownMenuItem>
@@ -240,6 +299,7 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
                     <Button
                       variant="destructive"
                       size="xs"
+                      disabled={isMutating}
                       onClick={() => setDeleteTarget('bulk')}
                     >
                       <Trash2 />
@@ -249,7 +309,7 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
 
                   <OrderStatusFilter
                     value={statusFilter}
-                    onChange={setStatusFilter}
+                    onChange={onStatusFilterChange}
                     labels={{
                       filterOrderStatus: t('filterOrderStatus'),
                       filterAll: t('filterAll'),
@@ -258,6 +318,7 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
                       statusInLaundry: t('statusInLaundry'),
                       statusReadyForDelivery: t('statusReadyForDelivery'),
                       statusDelivered: t('statusDelivered'),
+                      statusCancelled: t('statusCancelled'),
                     }}
                   />
                 </>
@@ -266,32 +327,43 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
           </div>
         }
         footer={
-          <DataTablePagination
-            pageIndex={paginationState.pageIndex}
-            pageSize={paginationState.pageSize}
-            totalRows={filteredOrders.length}
-            onPageChange={(pageIndex) =>
-              setPaginationState((current) => ({ ...current, pageIndex }))
-            }
-            onPageSizeChange={(pageSize) => setPaginationState({ pageIndex: 0, pageSize })}
-            labels={paginationLabels}
-          />
+          !isLoading ? (
+            <DataTablePagination
+              pageIndex={paginationState.pageIndex}
+              pageSize={paginationState.pageSize}
+              totalRows={totalRows}
+              onPageChange={(pageIndex) =>
+                onPaginationStateChange((current) => ({ ...current, pageIndex }))
+              }
+              onPageSizeChange={(pageSize) =>
+                onPaginationStateChange({ pageIndex: 0, pageSize })
+              }
+              labels={paginationLabels}
+            />
+          ) : undefined
         }
       >
-        <DataTable
-          columns={columns}
-          data={filteredOrders}
-          enableRowSelection
-          rowSelection={rowSelection}
-          onRowSelectionChange={setRowSelection}
-          getRowId={(row) => row.id}
-          emptyMessage={t('empty')}
-          animateRows
-          enablePagination
-          pagination={paginationState}
-          onPaginationChange={setPaginationState}
-          className="py-1"
-        />
+        {isLoading ? (
+          <TableSkeleton />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={orders}
+            enableRowSelection
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            getRowId={(row) => row.id}
+            getRowClassName={(row) =>
+              row.slug === activeOrderSlug
+                ? 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/15'
+                : undefined
+            }
+            onRowClick={onOrderSelect}
+            emptyMessage={t('empty')}
+            animateRows
+            className="py-1"
+          />
+        )}
       </DataTablePanel>
 
       <AssignDriverDialog
@@ -300,7 +372,8 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
         onOpenChange={(open) => !open && setAssignTarget(null)}
         orderNumber={assignTarget?.orderNumber ?? ''}
         currentDriverId={assignTarget?.driver?.id ?? null}
-        drivers={assignableDriversDummyData}
+        drivers={assignableDrivers}
+        isLoading={isDriversLoading}
         labels={{
           title: t('assignDriverTitle'),
           description: t('assignDriverDescription'),
@@ -309,8 +382,8 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
           assign: t('assignDriver'),
           cancel: t('cancel'),
         }}
-        onAssign={(driver) => assignTarget && handleAssignDriver(assignTarget.id, driver)}
-        onRemove={() => assignTarget && handleAssignDriver(assignTarget.id, null)}
+        onAssign={(driver) => assignTarget && void handleAssignDriver(assignTarget, driver)}
+        onRemove={() => assignTarget && void handleAssignDriver(assignTarget, null)}
       />
 
       <ConfirmDialog
@@ -325,13 +398,14 @@ export const OrdersTableSection = ({ orders, setOrders }: OrdersTableSectionProp
         confirmLabel={t('confirm')}
         cancelLabel={t('cancel')}
         destructive
+        loading={isMutating}
         onConfirm={() => {
           if (deleteTarget === 'bulk') {
-            handleBulkDelete()
+            void handleBulkDelete()
             return
           }
           if (deleteTarget) {
-            handleSingleDelete(deleteTarget)
+            void handleSingleDelete(deleteTarget)
           }
         }}
       />

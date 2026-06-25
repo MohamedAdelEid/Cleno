@@ -46,12 +46,15 @@ export interface LaundryIncidentReply {
 
 export interface LaundryIncident {
   id: string
+  slug?: string
   type: string
   content: string
   createdAt: string
   author: string
   stage: LaundryWorkflowStage
   replies: LaundryIncidentReply[]
+  isOpen?: boolean
+  replyCount?: number
 }
 
 export interface LaundryOrderNote {
@@ -63,6 +66,7 @@ export interface LaundryOrderNote {
 
 export interface LaundryOrder {
   id: string
+  slug: string
   orderNumber: string
   customer: LaundryCustomer
   stage: LaundryWorkflowStage
@@ -79,6 +83,7 @@ export interface LaundryOrder {
   incidents: LaundryIncident[]
   notes: LaundryOrderNote[]
   slaDeadline: string | null
+  hasOpenIncidents?: boolean
 }
 
 export interface LaundryStats {

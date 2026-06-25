@@ -2,10 +2,17 @@ import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRight } from 'lucide-react'
 
 import type { LaundryOrder } from '@/domain/entities/laundry-order.entity'
-import { UrgencyLevel } from '@/domain/enums'
+import { buildLaundryIncidentsPath } from '@/presentation/routes/laundry.routes'
+import { useNavigate } from 'react-router-dom'
+
+export interface OverdueAlertOrder {
+  slug: string
+  orderNumber: string
+}
 
 interface OperationalAlertsProps {
-  orders: LaundryOrder[]
+  overdueAlert: { count: number; orders: OverdueAlertOrder[] } | null
+  orders?: LaundryOrder[]
   labels: {
     title: string
     subtitle: string
@@ -14,10 +21,25 @@ interface OperationalAlertsProps {
   onOrderClick?: (order: LaundryOrder) => void
 }
 
-export const OperationalAlerts = ({ orders, labels, onOrderClick }: OperationalAlertsProps) => {
-  const overdueOrders = orders.filter((order) => order.urgency === UrgencyLevel.Overdue)
+export const OperationalAlerts = ({
+  overdueAlert,
+  orders = [],
+  labels,
+  onOrderClick,
+}: OperationalAlertsProps) => {
+  const navigate = useNavigate()
 
-  if (overdueOrders.length === 0) return null
+  if (!overdueAlert || overdueAlert.count === 0) return null
+
+  const handleChipClick = (slug: string) => {
+    const order = orders.find((item) => item.slug === slug)
+    if (order) {
+      onOrderClick?.(order)
+      return
+    }
+
+    navigate(buildLaundryIncidentsPath(slug))
+  }
 
   return (
     <motion.div
@@ -33,15 +55,15 @@ export const OperationalAlerts = ({ orders, labels, onOrderClick }: OperationalA
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <h3 className="text-sm font-semibold text-red-900 dark:text-red-200">
-              {labels.title.replace('{{count}}', String(overdueOrders.length))}
+              {labels.title.replace('{{count}}', String(overdueAlert.count))}
             </h3>
             <span className="hidden text-red-300 sm:inline dark:text-red-700">·</span>
             <div className="flex flex-wrap items-center gap-1.5">
-              {overdueOrders.map((order) => (
+              {overdueAlert.orders.map((order) => (
                 <button
-                  key={order.id}
+                  key={order.slug}
                   type="button"
-                  onClick={() => onOrderClick?.(order)}
+                  onClick={() => handleChipClick(order.slug)}
                   className="inline-flex items-center gap-1 rounded-md border border-red-200/80 bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-red-800 transition-colors hover:bg-red-50 dark:border-red-800/60 dark:bg-red-950/50 dark:text-red-200 dark:hover:bg-red-950/70"
                 >
                   {order.orderNumber}

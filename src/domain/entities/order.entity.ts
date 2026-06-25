@@ -31,12 +31,14 @@ export interface RecentOrder {
 
 export interface ManagedOrder {
   id: string
+  slug: string
   orderNumber: string
   company: OrderCompany
   branchId: string
   branchName: string
   pickupAt: string
   expectedDeliveryAt: string
+  bagCount: number
   bags: string[]
   driver: OrderDriver | null
   status: OrderStatus

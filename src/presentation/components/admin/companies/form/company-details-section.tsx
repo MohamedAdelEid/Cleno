@@ -27,6 +27,7 @@ interface CompanyDetailsSectionProps {
   control: Control<CompanyFormValues>
   mode?: 'create' | 'edit'
   existingLogoUrl?: string | null
+  existingLogoPath?: string | null
   onExistingLogoRemove?: () => void
   uploadedFiles: Partial<Record<CompanyUploadField, UploadedFile>>
   onUploadedFileChange: (field: CompanyUploadField, file: UploadedFile | null) => void
@@ -37,6 +38,7 @@ export const CompanyDetailsSection = ({
   control,
   mode = 'create',
   existingLogoUrl,
+  existingLogoPath,
   onExistingLogoRemove,
   uploadedFiles,
   onUploadedFileChange,
@@ -289,6 +291,7 @@ export const CompanyDetailsSection = ({
                   autoUpload
                   folder={UPLOAD_FOLDERS.companies.logos}
                   existingPreviewUrl={existingLogoUrl}
+                  existingFilePath={existingLogoPath}
                   onExistingPreviewRemove={onExistingLogoRemove}
                   uploadedFileUrl={uploadedFiles.logo?.fileUrl ?? null}
                   uploadedFileName={uploadedFiles.logo?.originalFileName ?? null}

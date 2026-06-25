@@ -9,8 +9,17 @@ interface TimeDisplayProps {
   isDeadline?: boolean
 }
 
+const formatDisplayTime = (time: string): string => {
+  const parsed = new Date(time)
+  if (!Number.isNaN(parsed.getTime())) {
+    return format(parsed, 'h:mm a')
+  }
+  return time
+}
+
 const getTimeUrgency = (time: string): UrgencyLevel => {
   const target = new Date(time)
+  if (Number.isNaN(target.getTime())) return UrgencyLevel.Normal
   if (isPast(target)) return UrgencyLevel.Overdue
 
   const hoursUntil = differenceInHours(target, new Date())
@@ -28,7 +37,7 @@ const urgencyTextStyles: Record<UrgencyLevel, string> = {
 
 export const TimeDisplay = ({ time, label, isDeadline = false }: TimeDisplayProps) => {
   const urgency = isDeadline ? getTimeUrgency(time) : UrgencyLevel.Normal
-  const formatted = format(new Date(time), 'h:mm a')
+  const formatted = formatDisplayTime(time)
 
   return (
     <div className="space-y-0.5">

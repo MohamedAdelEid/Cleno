@@ -16,6 +16,7 @@ export const navigation = {
   branches: 'Branches',
   orders: 'Orders',
   laundry: 'Laundry',
+  operationalBags: 'Operational bags',
   customers: 'Customers',
   companies: 'Companies',
   account: 'Account',

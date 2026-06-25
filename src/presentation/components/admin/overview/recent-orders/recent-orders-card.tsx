@@ -41,6 +41,7 @@ export const RecentOrdersCard = ({ index = 10, className }: RecentOrdersCardProp
           statusInLaundry: t('orderStatusInLaundry'),
           statusReadyForDelivery: t('orderStatusReady'),
           statusDelivered: t('orderStatusDelivered'),
+          statusCancelled: t('orderStatusCancelled'),
         },
         {
           isRtl,

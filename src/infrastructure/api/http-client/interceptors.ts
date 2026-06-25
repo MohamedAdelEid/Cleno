@@ -16,15 +16,6 @@ type RawValidationItem = {
   errorMessage?: string
 }
 
-type PaginationHeader = {
-  CurrentPage: number
-  PageSize: number
-  TotalCount: number
-  TotalPages: number
-  HasPrevious?: boolean
-  HasNext?: boolean
-}
-
 type ApiBody = {
   data?: unknown
   message?: string
@@ -49,11 +40,11 @@ const normalizeValidationErrors = (
   return items.length ? items : undefined
 }
 
-const toPaginationMeta = (raw: PaginationHeader): PaginationMeta => ({
-  page: raw.CurrentPage,
-  pageSize: raw.PageSize,
-  total: raw.TotalCount,
-  totalPages: raw.TotalPages,
+const toPaginationMeta = (raw: Record<string, unknown>): PaginationMeta => ({
+  page: Number(raw.CurrentPage ?? raw.currentPage ?? 1),
+  pageSize: Number(raw.PageSize ?? raw.pageSize ?? 10),
+  total: Number(raw.TotalCount ?? raw.totalCount ?? 0),
+  totalPages: Number(raw.TotalPages ?? raw.totalPages ?? 1),
 })
 
 const getPaginationFromResponse = (response: AxiosResponse): PaginationMeta | undefined => {
@@ -63,7 +54,7 @@ const getPaginationFromResponse = (response: AxiosResponse): PaginationMeta | un
   if (typeof headerValue !== 'string') return undefined
 
   try {
-    return toPaginationMeta(JSON.parse(headerValue) as PaginationHeader)
+    return toPaginationMeta(JSON.parse(headerValue) as Record<string, unknown>)
   } catch {
     return undefined
   }
@@ -161,9 +152,18 @@ const attachAuthHeaders = (config: InternalAxiosRequestConfig): void => {
   config.headers.set('Accept-Language', getStoredLanguage())
 }
 
+const attachFormDataHeaders = (config: InternalAxiosRequestConfig): void => {
+  if (!(config.data instanceof FormData)) return
+
+  // Default instance header is application/json — that makes axios serialize
+  // FormData as JSON and the server returns 415. Let the browser set multipart boundary.
+  config.headers.delete('Content-Type')
+}
+
 export const setupHttpInterceptors = (instance: AxiosInstance): void => {
   instance.interceptors.request.use((config) => {
     attachAuthHeaders(config)
+    attachFormDataHeaders(config)
     return config
   })
 

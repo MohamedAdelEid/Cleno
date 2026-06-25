@@ -26,8 +26,9 @@ export interface CompanyFormProps {
   draftKey: string
   defaultValues?: Partial<CompanyFormValues>
   existingLogoUrl?: string | null
+  existingLogoPath?: string | null
   onExistingLogoRemove?: () => void
-  onSubmit: (payload: CompanyFormSubmitPayload) => Promise<void> | void
+  onSubmit: (payload: CompanyFormSubmitPayload) => Promise<boolean | void> | boolean | void
   onSubmittingChange?: (isSubmitting: boolean) => void
 }
 
@@ -43,6 +44,7 @@ export const CompanyForm = ({
   draftKey,
   defaultValues,
   existingLogoUrl,
+  existingLogoPath,
   onExistingLogoRemove,
   onSubmit,
   onSubmittingChange,
@@ -151,11 +153,14 @@ export const CompanyForm = ({
   }
 
   const handleFormSubmit = handleSubmit(async (values) => {
-    await onSubmit({
+    const result = await onSubmit({
       values: stripFilesFromValues(values),
       uploadedFiles,
     })
-    clearDraft()
+
+    if (result !== false) {
+      clearDraft()
+    }
   })
 
   return (
@@ -164,6 +169,7 @@ export const CompanyForm = ({
         control={control}
         mode={mode}
         existingLogoUrl={existingLogoUrl}
+        existingLogoPath={existingLogoPath}
         onExistingLogoRemove={onExistingLogoRemove}
         uploadedFiles={uploadedFiles}
         onUploadedFileChange={handleUploadedFileChange}

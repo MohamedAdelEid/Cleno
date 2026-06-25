@@ -24,15 +24,42 @@ export const API_ENDPOINTS = {
   },
   companies: {
     adminAll: '/Companies/admin/all',
+    create: '/Companies/create',
     toggleActive: '/Companies/toggle-active',
     delete: '/Companies',
     approve: '/Companies/approve',
     reject: '/Companies/reject',
+    dropdown: '/companies/dropdown',
   },
   fileUpload: {
     upload: '/FileUpload/upload',
     uploadMultiple: '/FileUpload/upload-multiple',
     delete: '/FileUpload/delete',
     deleteFolder: '/FileUpload/delete-folder',
+  },
+  orders: {
+    adminDashboard: '/orders/admin/dashboard',
+    adminAll: '/orders/admin/all',
+    adminBySlug: (slug: string) => `/orders/admin/${slug}`,
+    adminTracking: (slug: string) => `/orders/admin/${slug}/tracking`,
+    adminStatus: (slug: string) => `/orders/admin/${slug}/status`,
+    adminDriver: (slug: string) => `/orders/admin/${slug}/driver`,
+  },
+  drivers: {
+    dropdown: '/drivers/dropdown',
+  },
+  laundry: {
+    boardStats: '/orders/laundry/board-stats',
+    overdueAlert: '/orders/laundry/overdue-alert',
+    board: '/orders/laundry',
+    bulkStatus: '/orders/laundry/bulk-status',
+    notes: (slug: string) => `/orders/${slug}/notes`,
+    bags: (slug: string) => `/orders/${slug}/bags`,
+    bagById: (slug: string, assignmentId: string) => `/orders/${slug}/bags/${assignmentId}`,
+    incidents: (slug: string) => `/orders/${slug}/incidents`,
+  },
+  incidents: {
+    bySlug: (slug: string) => `/incidents/${slug}`,
+    replies: (slug: string) => `/incidents/${slug}/replies`,
   },
 } as const

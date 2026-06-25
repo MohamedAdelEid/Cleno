@@ -18,6 +18,7 @@ interface UseFileUploadOptions {
 interface UseFileUploadReturn {
   upload: (file: File) => Promise<UploadedFile | null>
   remove: (filePath: string) => Promise<boolean>
+  deleteRemote: (filePath: string) => Promise<boolean>
   progress: number
   isUploading: boolean
   uploadedFile: UploadedFile | null
@@ -114,7 +115,7 @@ export const useFileUpload = ({
     [animateFakeProgress, animateToComplete, folder, onError, onSuccess, stopAnimation],
   )
 
-  const remove = useCallback(
+  const deleteRemote = useCallback(
     async (filePath: string): Promise<boolean> => {
       const result = await fileUploadApi.delete(filePath)
 
@@ -123,10 +124,20 @@ export const useFileUpload = ({
         return false
       }
 
+      return true
+    },
+    [onError],
+  )
+
+  const remove = useCallback(
+    async (filePath: string): Promise<boolean> => {
+      const deleted = await deleteRemote(filePath)
+      if (!deleted) return false
+
       reset()
       return true
     },
-    [onError, reset],
+    [deleteRemote, reset],
   )
 
   useEffect(() => () => stopAnimation(), [stopAnimation])
@@ -134,6 +145,7 @@ export const useFileUpload = ({
   return {
     upload,
     remove,
+    deleteRemote,
     progress,
     isUploading,
     uploadedFile,

@@ -16,6 +16,7 @@ export const navigation = {
   branches: 'الفروع',
   orders: 'الطلبات',
   laundry: 'الغسيل',
+  operationalBags: 'الحقائب التشغيلية',
   customers: 'العملاء',
   companies: 'الشركات',
   account: 'الحساب',

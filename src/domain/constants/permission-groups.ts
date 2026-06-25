@@ -7,6 +7,7 @@ export const PermissionGroupKey = {
   Branches: 'branches',
   Orders: 'orders',
   Laundry: 'laundry',
+  Bags: 'bags',
   Customers: 'customers',
   Settings: 'settings',
 } as const
@@ -39,6 +40,10 @@ export const PERMISSION_GROUPS: PermissionGroupDefinition[] = [
   {
     key: PermissionGroupKey.Laundry,
     permissions: [Permission.LaundryView],
+  },
+  {
+    key: PermissionGroupKey.Bags,
+    permissions: [Permission.BagsView],
   },
   {
     key: PermissionGroupKey.Customers,

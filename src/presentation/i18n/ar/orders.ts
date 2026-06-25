@@ -48,6 +48,10 @@ export const orders = {
   statusInLaundry: 'في الغسيل',
   statusReadyForDelivery: 'جاهز للتوصيل',
   statusDelivered: 'تم التوصيل',
+  statusCancelled: 'ملغى',
+
+  trackingEmptyTitle: 'لا توجد شحنة نشطة',
+  trackingEmptyDesc: 'اختر طلباً من الجدول لتتبع مسار الشحنة.',
 
   tableTitle: 'جميع الطلبات',
   tableDescription: 'ابحث وفلتر وأدر كل الطلبات في مساحة العمل.',

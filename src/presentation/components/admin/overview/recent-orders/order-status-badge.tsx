@@ -5,6 +5,7 @@ import {
   PackageCheck,
   Sparkles,
   Truck,
+  XCircle,
 } from 'lucide-react'
 
 import { OrderStatus } from '@/domain/enums'
@@ -25,7 +26,7 @@ const statusConfig: Record<
     className:
       'border-slate-200/80 bg-slate-50 text-slate-700 dark:border-slate-700/60 dark:bg-slate-800/50 dark:text-slate-300',
   },
-  [OrderStatus.OnTheWayToLaundry]: {
+  [OrderStatus.PickedUp]: {
     icon: Truck,
     className:
       'border-sky-200/80 bg-sky-50 text-sky-700 dark:border-sky-800/60 dark:bg-sky-950/40 dark:text-sky-300',
@@ -44,6 +45,11 @@ const statusConfig: Record<
     icon: CircleCheck,
     className:
       'border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300',
+  },
+  [OrderStatus.Cancelled]: {
+    icon: XCircle,
+    className:
+      'border-red-200/80 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-300',
   },
 }
 

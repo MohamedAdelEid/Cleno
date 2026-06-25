@@ -58,6 +58,7 @@ export const dashboard = {
   orderStatusInLaundry: 'قيد الغسيل',
   orderStatusReady: 'جاهز للتسليم',
   orderStatusDelivered: 'تم التسليم',
+  orderStatusCancelled: 'ملغى',
   orderVolumeTitle: 'حجم الطلبات اليومي',
   orderVolumeLastWeek: 'آخر أسبوع',
   orderVolumeLast14Days: 'آخر 14 يوم',

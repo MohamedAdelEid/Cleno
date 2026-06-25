@@ -58,6 +58,7 @@ export const dashboard = {
   orderStatusInLaundry: 'In Laundry',
   orderStatusReady: 'Ready for Delivery',
   orderStatusDelivered: 'Delivered',
+  orderStatusCancelled: 'Cancelled',
   orderVolumeTitle: 'Daily Order Volume',
   orderVolumeLastWeek: 'Last week',
   orderVolumeLast14Days: 'Last 14 days',

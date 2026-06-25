@@ -7,6 +7,7 @@ import { roles } from './roles'
 import { companies } from './companies'
 import { orders } from './orders'
 import { laundry } from './laundry'
+import { operationalBags } from './operational-bags'
 
 export const ar: Partial<Record<Namespace, Record<string, string>>> = {
   common,
@@ -17,4 +18,5 @@ export const ar: Partial<Record<Namespace, Record<string, string>>> = {
   companies,
   orders,
   laundry,
+  operationalBags,
 }

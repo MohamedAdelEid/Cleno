@@ -1,34 +1,64 @@
+import { Plus, RefreshCw, ShoppingBag } from 'lucide-react'
+import { format } from 'date-fns'
+import { arSA, enUS } from 'date-fns/locale'
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+
 import {
   OrderAnalysisCard,
   OrdersOverviewSection,
   OrdersTableSection,
   ShipmentTrackingCard,
-  ordersTableDummyData,
+  useOrders,
 } from '@/presentation/components/admin/orders'
 import { PageHeader } from '@/presentation/components/layout'
 import { Button } from '@/presentation/components/ui/button'
 import { useDirection } from '@/presentation/hooks/use-direction'
 import { useTranslation } from '@/presentation/hooks/use-translation'
-import { format } from 'date-fns'
-import { arSA, enUS } from 'date-fns/locale'
-import { motion } from 'framer-motion'
-import { Plus, RefreshCw, ShoppingBag } from 'lucide-react'
-import { useState } from 'react'
 
 export const OrdersPage = () => {
   const { t } = useTranslation('orders')
   const { isRtl } = useDirection()
-  const [lastUpdated, setLastUpdated] = useState(() => new Date())
   const [refreshTick, setRefreshTick] = useState(0)
-  const [orders, setOrders] = useState(ordersTableDummyData)
+
+  const {
+    overviewStats,
+    analysisSummary,
+    orders,
+    totalRows,
+    activeShipment,
+    activeOrderSlug,
+    assignableDrivers,
+    isDashboardLoading,
+    isOrdersLoading,
+    isTrackingLoading,
+    isDriversLoading,
+    isMutating,
+    lastUpdated,
+    keyword,
+    setKeyword,
+    statusFilter,
+    setStatusFilter,
+    analysisInterval,
+    setAnalysisInterval,
+    paginationState,
+    setPaginationState,
+    selectActiveOrder,
+    refreshAll,
+    fetchDrivers,
+    assignDriver,
+    cancelOrder,
+    bulkUpdateStatus,
+    bulkCancelOrders,
+  } = useOrders()
 
   const formattedLastUpdated = format(lastUpdated, 'MMM d, yyyy h:mm a', {
     locale: isRtl ? arSA : enUS,
   })
 
-  const handleRefresh = () => {
-    setLastUpdated(new Date())
+  const handleRefresh = async () => {
     setRefreshTick((tick) => tick + 1)
+    await refreshAll()
   }
 
   return (
@@ -56,7 +86,7 @@ export const OrdersPage = () => {
               variant="outline"
               size="icon"
               aria-label={t('refresh')}
-              onClick={handleRefresh}
+              onClick={() => void handleRefresh()}
             >
               <motion.span
                 key={refreshTick}
@@ -74,14 +104,47 @@ export const OrdersPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-3 lg:items-stretch">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <OrdersOverviewSection />
-          <OrderAnalysisCard index={3} className="min-h-0 flex-1" />
+          <OrdersOverviewSection stats={overviewStats} isLoading={isDashboardLoading} />
+          <OrderAnalysisCard
+            index={3}
+            className="min-h-0 flex-1"
+            summary={analysisSummary}
+            interval={analysisInterval}
+            onIntervalChange={setAnalysisInterval}
+            isLoading={isDashboardLoading}
+          />
         </div>
 
-        <ShipmentTrackingCard index={4} className="h-full min-h-0 lg:col-span-1" />
+        <ShipmentTrackingCard
+          index={4}
+          className="h-full min-h-0 lg:col-span-1"
+          shipment={activeShipment}
+          isLoading={isTrackingLoading && !activeShipment}
+          isEmpty={!activeOrderSlug}
+        />
       </div>
 
-      <OrdersTableSection orders={orders} setOrders={setOrders} />
+      <OrdersTableSection
+        orders={orders}
+        totalRows={totalRows}
+        isLoading={isOrdersLoading}
+        isMutating={isMutating}
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        paginationState={paginationState}
+        onPaginationStateChange={setPaginationState}
+        activeOrderSlug={activeOrderSlug}
+        onOrderSelect={selectActiveOrder}
+        assignableDrivers={assignableDrivers}
+        isDriversLoading={isDriversLoading}
+        onAssignDialogOpen={fetchDrivers}
+        onAssignDriver={assignDriver}
+        onCancelOrder={cancelOrder}
+        onBulkUpdateStatus={bulkUpdateStatus}
+        onBulkCancel={bulkCancelOrders}
+      />
     </div>
   )
 }

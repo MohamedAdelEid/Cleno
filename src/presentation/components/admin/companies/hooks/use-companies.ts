@@ -42,39 +42,48 @@ export const useCompanies = ({ initialPageSize = 5 }: UseCompaniesOptions = {}) 
   }, [keyword])
 
   useEffect(() => {
-    setPaginationState((current) => ({ ...current, pageIndex: 0 }))
+    setPaginationState((current) =>
+      current.pageIndex === 0 ? current : { ...current, pageIndex: 0 },
+    )
   }, [debouncedKeyword, statusFilter, activeFilter])
 
   const fetchCompanies = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
-    const result = await companiesApi.getAdminAll({
-      keyword: debouncedKeyword || undefined,
-      pageNumber: paginationState.pageIndex + 1,
-      pageSize: paginationState.pageSize,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      isActive:
-        activeFilter === 'all' ? undefined : activeFilter === 'active',
-      trendYear,
-      trendMonth,
-    })
+    try {
+      const result = await companiesApi.getAdminAll({
+        keyword: debouncedKeyword || undefined,
+        pageNumber: paginationState.pageIndex + 1,
+        pageSize: paginationState.pageSize,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        isActive:
+          activeFilter === 'all' ? undefined : activeFilter === 'active',
+        trendYear,
+        trendMonth,
+      })
 
-    if (result.hasValue && result.data) {
-      setCompanies(result.data.items)
-      setStats(result.data.stats)
+      if (result.hasValue && result.data) {
+        setCompanies(result.data.items)
+        setStats(result.data.stats)
 
-      const totalFromPagination = result.pagination?.total
-      const totalFromStats = result.data.stats.find((stat) => stat.key === 'totalCompanies')?.value
-      setTotalRows(totalFromPagination ?? totalFromStats ?? result.data.items.length)
-    } else {
+        const totalFromPagination = result.pagination?.total
+        const totalFromStats = result.data.stats.find((stat) => stat.key === 'totalCompanies')?.value
+        setTotalRows(totalFromPagination ?? totalFromStats ?? result.data.items.length)
+      } else {
+        setCompanies([])
+        setStats([])
+        setTotalRows(0)
+        setError(result.error?.message ?? null)
+      }
+    } catch {
       setCompanies([])
       setStats([])
       setTotalRows(0)
-      setError(result.error?.message ?? null)
+      setError('Unable to load companies.')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }, [
     activeFilter,
     debouncedKeyword,

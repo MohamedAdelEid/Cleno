@@ -19,15 +19,17 @@ import {
 } from '@/presentation/components/admin/laundry'
 import { PageHeader } from '@/presentation/components/layout'
 import { Button } from '@/presentation/components/ui/button'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { fadeUp } from '@/presentation/utils/motion'
 
 export const LaundryOperationsPage = () => {
   const { t } = useTranslation('laundry')
-  const [refreshTick, setRefreshTick] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const {
     stats,
+    overdueAlert,
     orders,
     allOrders,
     search,
@@ -43,6 +45,12 @@ export const LaundryOperationsPage = () => {
     setActiveStage,
     drivers,
     processingBagPool,
+    bagModalOrder,
+    isStatsLoading,
+    isOrdersLoading,
+    isBagModalLoading,
+    isMutating,
+    refreshAll,
 
     selectedIds,
     handleSelectChange,
@@ -74,7 +82,7 @@ export const LaundryOperationsPage = () => {
     handleAddNote,
     moveOrder,
     searchRef,
-  } = useLaundryDashboard()
+  } = useLaundryDashboard({ refreshKey })
 
   const statsLabels = {
     receivedToday: t('statReceivedToday'),
@@ -235,10 +243,14 @@ export const LaundryOperationsPage = () => {
             type="button"
             variant="outline"
             size="icon"
-            onClick={() => setRefreshTick((tick) => tick + 1)}
+            disabled={isMutating}
+            onClick={() => {
+              setRefreshKey((key) => key + 1)
+              void refreshAll()
+            }}
           >
             <motion.span
-              key={refreshTick}
+              key={refreshKey}
               initial={{ rotate: 0 }}
               animate={{ rotate: 360 }}
               transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
@@ -251,10 +263,15 @@ export const LaundryOperationsPage = () => {
       />
 
       <motion.div {...fadeUp(0.08)}>
-        <OperationalAlerts orders={allOrders} labels={alertLabels} />
+        <OperationalAlerts
+          overdueAlert={overdueAlert}
+          orders={allOrders}
+          labels={alertLabels}
+          onOrderClick={(order) => setActiveStage(order.stage)}
+        />
       </motion.div>
 
-      <LaundryStatsSection stats={stats} labels={statsLabels} />
+      <LaundryStatsSection stats={stats} isLoading={isStatsLoading} labels={statsLabels} />
 
       <LaundryFiltersSection
         search={search}
@@ -274,7 +291,13 @@ export const LaundryOperationsPage = () => {
         <WorkflowNotice message={t('workflowNotice')} />
       </motion.div>
 
-      {viewMode === 'list' ? (
+      {isOrdersLoading ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-56 rounded-xl" />
+          ))}
+        </div>
+      ) : viewMode === 'list' ? (
         <LaundryListView
           orders={orders}
           activeStage={activeStage}
@@ -327,7 +350,8 @@ export const LaundryOperationsPage = () => {
         description={stageConfirmDescription}
         confirmLabel={t('bulkConfirm')}
         cancelLabel={t('bulkCancel')}
-        onConfirm={confirmStageAction}
+        onConfirm={() => void confirmStageAction()}
+        isLoading={isMutating}
       />
 
       <AssignDriverModal
@@ -343,9 +367,12 @@ export const LaundryOperationsPage = () => {
       <ItemBagAssignmentModal
         open={!!itemAssignOrder}
         onOpenChange={(open) => !open && setItemAssignOrder(null)}
-        order={itemAssignOrder}
+        order={bagModalOrder ?? itemAssignOrder}
+        isLoading={isBagModalLoading}
         availableBags={processingBagPool}
-        onSaveAssignments={handleSaveBagAssignments}
+        onSaveAssignments={(orderId, assignments, bags) =>
+          void handleSaveBagAssignments(orderId, assignments, bags)
+        }
         labels={itemLabels}
       />
 

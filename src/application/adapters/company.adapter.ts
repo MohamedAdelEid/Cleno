@@ -1,7 +1,9 @@
 import type { CompaniesAdminAllDataDto, CompanyAdminItemDto } from '@/application/dtos/companies/companies-admin.dto'
+import type { CompanyCreateRequestDto } from '@/application/dtos/companies/create-company.dto'
 import type { ManagedCompany } from '@/domain/entities'
+import type { CompanyFormValues } from '@/domain/schemas'
 import { CompanyAccountStatus } from '@/domain/enums'
-import type { CompaniesAdminList, CompanyStat, CompanyStatKey } from '@/domain/types'
+import type { CompaniesAdminList, CompanyStat, CompanyStatKey, UploadedFile } from '@/domain/types'
 
 const COMPANY_STAT_KEYS = new Set<CompanyStatKey>([
   'totalCompanies',
@@ -39,8 +41,8 @@ export const companyAdapter = {
       },
       phone: dto.phone,
       commercialRegistration: dto.commercialRegistration,
-      branchesCount: dto.branchesCount,
-      branches: dto.branches.map((branch) => ({
+      branchesCount: dto.branchesCount ?? 0,
+      branches: (dto.branches ?? []).map((branch) => ({
         id: branch.id,
         name: branch.name,
         slug: branch.slug,
@@ -58,19 +60,44 @@ export const companyAdapter = {
 
   toAdminList(dto: CompaniesAdminAllDataDto): CompaniesAdminList {
     return {
-      stats: dto.stats
+      stats: (dto.stats ?? [])
         .filter((stat) => isCompanyStatKey(stat.key))
         .map(
           (stat): CompanyStat => ({
             key: stat.key as CompanyStatKey,
             value: stat.value,
-            sparkline: stat.sparkline.map((point) => ({
+            sparkline: (stat.sparkline ?? []).map((point) => ({
               date: point.date,
               value: point.value,
             })),
           }),
         ),
-      items: dto.items.map((item) => companyAdapter.toManagedCompany(item)),
+      items: (dto.items ?? []).map((item) => companyAdapter.toManagedCompany(item)),
     }
+  },
+
+  toCreateRequest(
+    values: CompanyFormValues,
+    uploadedFiles: Partial<Record<'logo' | 'commercialRegistration', UploadedFile>>,
+    options?: { parentCompanyId?: string },
+  ): CompanyCreateRequestDto {
+    const payload: CompanyCreateRequestDto = {
+      businessName: values.businessName,
+      mainContactPerson: values.mainContactPerson,
+      phone: values.phone,
+      photo: uploadedFiles.logo?.filePath ?? '',
+      email: values.email,
+      password: values.password,
+      type: values.businessType,
+      address: values.address,
+      googleMapLink: values.googleMapLink,
+      commercialRegistration: uploadedFiles.commercialRegistration?.filePath ?? '',
+    }
+
+    if (options?.parentCompanyId) {
+      payload.parentCompanyId = options.parentCompanyId
+    }
+
+    return payload
   },
 }

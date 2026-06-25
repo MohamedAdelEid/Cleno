@@ -40,14 +40,16 @@ export interface OrdersColumnLabels {
   statusInLaundry: string
   statusReadyForDelivery: string
   statusDelivered: string
+  statusCancelled: string
 }
 
 const statusLabelKey: Record<OrderStatus, keyof OrdersColumnLabels> = {
   [OrderStatus.OrderCreated]: 'statusOrderCreated',
-  [OrderStatus.OnTheWayToLaundry]: 'statusPickedUp',
+  [OrderStatus.PickedUp]: 'statusPickedUp',
   [OrderStatus.InLaundry]: 'statusInLaundry',
   [OrderStatus.ReadyForDelivery]: 'statusReadyForDelivery',
   [OrderStatus.Delivered]: 'statusDelivered',
+  [OrderStatus.Cancelled]: 'statusCancelled',
 }
 
 const formatDate = (value: string, isRtl: boolean) =>
@@ -118,9 +120,11 @@ export const createOrdersColumns = (
   },
   {
     id: 'bags',
-    accessorFn: (row) => row.bags.length,
+    accessorFn: (row) => row.bagCount,
     header: ({ column }) => <DataTableColumnHeader column={column} title={labels.bags} />,
-    cell: ({ row }) => <OrderBagsCell bags={row.original.bags} />,
+    cell: ({ row }) => (
+      <OrderBagsCell count={row.original.bagCount} labels={row.original.bags} />
+    ),
   },
   {
     id: 'driver',

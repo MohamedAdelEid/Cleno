@@ -56,6 +56,7 @@ export const EditCompanyPage = () => {
         draftKey={draftKey}
         defaultValues={mapCompanyToFormValues(company)}
         existingLogoUrl={existingLogoUrl}
+        existingLogoPath={company.logoUrl}
         onExistingLogoRemove={() => setExistingLogoUrl(null)}
         onSubmit={handleSubmit}
         onSubmittingChange={setIsSubmitting}

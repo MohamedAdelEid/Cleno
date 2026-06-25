@@ -29,14 +29,14 @@ interface OrderIncidentTriggerProps {
 export const OrderIncidentTrigger = ({ order, className }: OrderIncidentTriggerProps) => {
   const navigate = useNavigate()
   const count = order.incidents.length
+  const hasIncidents = order.hasOpenIncidents ?? count > 0
 
-  if (count === 0) return null
+  if (!hasIncidents) return null
 
   const latest = order.incidents[count - 1]
-  if (!latest) return null
 
   const handleClick = () => {
-    navigate(buildLaundryIncidentsPath(order.id))
+    navigate(buildLaundryIncidentsPath(order.slug))
   }
 
   return (
@@ -64,9 +64,9 @@ export const OrderIncidentTrigger = ({ order, className }: OrderIncidentTriggerP
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-56 space-y-1 p-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-            {latest.type || stageTypeLabels[latest.stage]}
+            {latest?.type || stageTypeLabels[latest?.stage ?? order.stage]}
           </p>
-          <p className="text-xs leading-snug">{truncate(latest.content)}</p>
+          <p className="text-xs leading-snug">{truncate(latest?.content ?? '')}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

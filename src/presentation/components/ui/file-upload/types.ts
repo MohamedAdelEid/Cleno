@@ -24,6 +24,7 @@ export interface FileUploadProps {
   disabled?: boolean
   labels: FileUploadLabels
   existingPreviewUrl?: string | null
+  existingFilePath?: string | null
   onExistingPreviewRemove?: () => void
   autoUpload?: boolean
   folder?: string

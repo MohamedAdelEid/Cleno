@@ -1,6 +1,5 @@
 import type {
   FileDeleteFolderRequestDto,
-  FileDeleteRequestDto,
   FileDeleteResponseDto,
   FileUploadResponseDto,
 } from '@/application/dtos/file-upload/file-upload.dto'
@@ -102,11 +101,9 @@ export const fileUploadApi = {
   async delete(
     filePath: string,
   ): Promise<{ success: true; message: string } | { success: false; message: string }> {
-    const payload: FileDeleteRequestDto = { filePath }
-
     const result = await httpClient.delete<FileDeleteResponseDto>({
       url: API_ENDPOINTS.fileUpload.delete,
-      data: payload,
+      params: { filePath },
     })
 
     return parseDeleteResponse(result.data, result.error?.message)

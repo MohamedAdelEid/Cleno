@@ -8,6 +8,7 @@ export const Permission = {
   OrdersView: 'orders.view',
   OrdersUpdate: 'orders.update',
   LaundryView: 'laundry.view',
+  BagsView: 'bags.view',
   CustomersView: 'customers.view',
   SettingsView: 'settings.view',
 } as const

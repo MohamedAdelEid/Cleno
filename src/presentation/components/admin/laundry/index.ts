@@ -14,9 +14,3 @@ export { AssignDriverModal } from './modals/assign-driver-modal'
 export { ItemBagAssignmentModal } from './modals/item-bag-assignment-modal'
 export { KeyboardShortcutsHint, type KeyboardShortcut } from './keyboard-shortcuts-hint'
 export { useLaundryDashboard } from './hooks/use-laundry-dashboard'
-export {
-  laundryStats,
-  laundryOrders,
-  availableDrivers,
-  availableProcessingBags,
-} from './laundry.data'

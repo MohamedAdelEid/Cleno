@@ -3,6 +3,7 @@ import { ArrowDownToLine, Clock, Package, Send, ShoppingBag } from 'lucide-react
 import type { LucideIcon } from 'lucide-react'
 
 import type { LaundryStats } from '@/domain/entities/laundry-order.entity'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { cn } from '@/presentation/utils'
 
 const CARD_EASE = [0.25, 0.1, 0.25, 1] as const
@@ -15,7 +16,8 @@ interface StatItem {
 }
 
 interface LaundryStatsSectionProps {
-  stats: LaundryStats
+  stats: LaundryStats | null
+  isLoading?: boolean
   labels: {
     receivedToday: string
     processedToday: string
@@ -25,7 +27,32 @@ interface LaundryStatsSectionProps {
   }
 }
 
-export const LaundryStatsSection = ({ stats, labels }: LaundryStatsSectionProps) => {
+const StatSkeleton = ({ index }: { index: number }) => (
+  <motion.article
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.38, ease: CARD_EASE, delay: index * 0.06 }}
+    className="flex items-center gap-3.5 rounded-xl border border-border/70 bg-background px-4 py-3.5 shadow-xs"
+  >
+    <Skeleton className="size-10 rounded-lg" />
+    <div className="min-w-0 flex-1 space-y-2">
+      <Skeleton className="h-3 w-24" />
+      <Skeleton className="h-6 w-16" />
+    </div>
+  </motion.article>
+)
+
+export const LaundryStatsSection = ({ stats, isLoading = false, labels }: LaundryStatsSectionProps) => {
+  if (isLoading || !stats) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <StatSkeleton key={index} index={index} />
+        ))}
+      </div>
+    )
+  }
+
   const items: StatItem[] = [
     { title: labels.receivedToday, value: stats.receivedToday, icon: ArrowDownToLine, accent: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40' },
     { title: labels.processedToday, value: stats.processedToday, icon: ShoppingBag, accent: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/40' },

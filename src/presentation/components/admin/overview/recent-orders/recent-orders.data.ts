@@ -18,7 +18,7 @@ export const recentOrdersDummyData: RecentOrder[] = [
       email: 'khalid.hassan@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Khalid',
     },
-    status: OrderStatus.OnTheWayToLaundry,
+    status: OrderStatus.PickedUp,
   },
   {
     id: 'ord-2',
@@ -134,6 +134,6 @@ export const recentOrdersDummyData: RecentOrder[] = [
       email: 'youssef.ali@cleno.bh',
       avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=Youssef',
     },
-    status: OrderStatus.OnTheWayToLaundry,
+    status: OrderStatus.PickedUp,
   },
 ]

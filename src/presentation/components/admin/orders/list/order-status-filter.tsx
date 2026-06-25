@@ -17,6 +17,7 @@ export interface OrderStatusFilterLabels {
   statusInLaundry: string
   statusReadyForDelivery: string
   statusDelivered: string
+  statusCancelled: string
 }
 
 interface OrderStatusFilterProps {
@@ -31,10 +32,11 @@ const statusOptions: Array<{
 }> = [
   { value: 'all', labelKey: 'filterAll' },
   { value: OrderStatus.OrderCreated, labelKey: 'statusOrderCreated' },
-  { value: OrderStatus.OnTheWayToLaundry, labelKey: 'statusPickedUp' },
+  { value: OrderStatus.PickedUp, labelKey: 'statusPickedUp' },
   { value: OrderStatus.InLaundry, labelKey: 'statusInLaundry' },
   { value: OrderStatus.ReadyForDelivery, labelKey: 'statusReadyForDelivery' },
   { value: OrderStatus.Delivered, labelKey: 'statusDelivered' },
+  { value: OrderStatus.Cancelled, labelKey: 'statusCancelled' },
 ]
 
 export const OrderStatusFilter = ({ value, onChange, labels }: OrderStatusFilterProps) => {

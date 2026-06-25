@@ -27,6 +27,7 @@ interface ItemBagAssignmentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   order: LaundryOrder | null
+  isLoading?: boolean
   availableBags: { id: string; bagId: string }[]
   onSaveAssignments: (
     orderId: string,
@@ -57,6 +58,7 @@ export const ItemBagAssignmentModal = ({
   open,
   onOpenChange,
   order,
+  isLoading = false,
   availableBags,
   onSaveAssignments,
   labels,
@@ -202,6 +204,16 @@ export const ItemBagAssignmentModal = ({
     onOpenChange(false)
   }
 
+  const handleUseCustomBag = () => {
+    const bagNumber = bagQuery.trim()
+    if (!bagNumber) return
+
+    handleSelectBag({
+      id: `custom-${bagNumber}`,
+      bagId: bagNumber,
+    })
+  }
+
   return (
     <Dialog open={open && !!order} onOpenChange={handleOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
@@ -217,6 +229,12 @@ export const ItemBagAssignmentModal = ({
               </DialogDescription>
             </DialogHeader>
 
+            {isLoading ? (
+              <div className="space-y-3 py-6">
+                <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                <div className="h-24 animate-pulse rounded-lg bg-muted" />
+              </div>
+            ) : (
             <div className="flex-1 space-y-4 overflow-y-auto py-2">
               {effectiveAssignments.length > 0 && (
                 <div className="space-y-2">
@@ -380,7 +398,14 @@ export const ItemBagAssignmentModal = ({
                     />
                     <div className="max-h-48 space-y-1.5 overflow-y-auto">
                       {filteredBags.length === 0 ? (
-                        <p className="py-4 text-center text-xs text-muted-foreground">{labels.noBagsFound}</p>
+                        <div className="space-y-2 py-4 text-center">
+                          <p className="text-xs text-muted-foreground">{labels.noBagsFound}</p>
+                          {bagQuery.trim() && (
+                            <Button size="sm" variant="outline" onClick={handleUseCustomBag}>
+                              {bagQuery.trim()}
+                            </Button>
+                          )}
+                        </div>
                       ) : (
                         filteredBags.map((bag) => (
                           <button
@@ -399,8 +424,9 @@ export const ItemBagAssignmentModal = ({
                 )}
               </AnimatePresence>
             </div>
+            )}
 
-            {hasChanges && step === 'items' && (
+            {!isLoading && hasChanges && step === 'items' && (
               <Button className="w-full gap-2" onClick={handleDone}>
                 <Check className="size-4" />
                 {labels.done}

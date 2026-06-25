@@ -9,9 +9,11 @@ import { AddRolePage, EditRolePage, RolesPage } from '@/presentation/pages/admin
 import {
   AddCompanyPage,
   CompaniesPage,
+  CompanyDetailsPage,
   EditCompanyPage,
 } from '@/presentation/pages/admin/companies'
 import { LaundryOperationsPage, LaundryIncidentsPage } from '@/presentation/pages/admin/laundry'
+import { OperationalBagsPage } from '@/presentation/pages/admin/operational-bags'
 import { DashboardPlaceholderPage } from '@/presentation/pages/dashboard/dashboard-placeholder-page'
 import { NotFoundPage } from '@/presentation/pages/not-found-page'
 import { PublicRoute } from './public-route'
@@ -74,6 +76,10 @@ export const router = createBrowserRouter([
         element: <LaundryIncidentsPage />,
       },
       {
+        path: ROUTES.OPERATIONAL_BAGS.INDEX,
+        element: <OperationalBagsPage />,
+      },
+      {
         path: ROUTES.COMPANIES.INDEX,
         element: <CompaniesPage />,
       },
@@ -84,6 +90,10 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.COMPANIES.EDIT,
         element: <EditCompanyPage />,
+      },
+      {
+        path: ROUTES.COMPANIES.DETAILS,
+        element: <CompanyDetailsPage />,
       },
       {
         path: ROUTES.CUSTOMERS.INDEX,

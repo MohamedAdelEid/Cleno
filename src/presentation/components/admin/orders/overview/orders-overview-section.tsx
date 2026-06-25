@@ -1,20 +1,57 @@
 import { ClipboardList, Receipt, Truck } from 'lucide-react'
 
+import type { OrdersOverviewStats } from '@/domain/types'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn } from '@/presentation/utils'
-import { ordersOverviewStats } from '../orders.data'
 import { OrderStatCardShell } from './order-stat-card-shell'
 import { StatDualProgress } from './stat-dual-progress'
 import { StatOrdersSparkline } from './stat-orders-sparkline'
 import { StatSegmentedBars } from './stat-segmented-bars'
 
 interface OrdersOverviewSectionProps {
+  stats: OrdersOverviewStats | null
+  isLoading?: boolean
   className?: string
 }
 
-export const OrdersOverviewSection = ({ className }: OrdersOverviewSectionProps) => {
+const OverviewSkeletonCard = ({ index }: { index: number }) => (
+  <div
+    className="rounded-xl border border-border/80 bg-muted/15 p-4"
+    style={{ animationDelay: `${index * 60}ms` }}
+  >
+    <div className="mb-4 flex items-center justify-between">
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="size-8 rounded-lg" />
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <Skeleton className="h-14 w-24 rounded-lg" />
+    </div>
+  </div>
+)
+
+export const OrdersOverviewSection = ({
+  stats,
+  isLoading = false,
+  className,
+}: OrdersOverviewSectionProps) => {
   const { t } = useTranslation('orders')
-  const stats = ordersOverviewStats
+
+  if (isLoading && !stats) {
+    return (
+      <div className={cn('grid gap-4 sm:grid-cols-2 xl:grid-cols-3', className)}>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <OverviewSkeletonCard key={index} index={index} />
+        ))}
+      </div>
+    )
+  }
+
+  if (!stats) return null
 
   const totalPositive = stats.totalTrendPercent >= 0
   const totalTrendFormatted = `${totalPositive ? '+' : ''}${stats.totalTrendPercent.toFixed(1)}%`

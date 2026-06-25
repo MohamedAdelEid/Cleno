@@ -14,21 +14,13 @@ export interface RequestOptions<TData = unknown> {
   timeout?: number
 }
 
-const buildHeaders = (
-  custom?: Record<string, string>,
-  isFormData?: boolean,
-): Record<string, string> | undefined => {
-  if (isFormData) {
-    return custom
-  }
-
-  return { ...custom }
-}
+const buildHeaders = (custom?: Record<string, string>): Record<string, string> | undefined =>
+  custom ? { ...custom } : undefined
 
 const toRequestConfig = (options: Omit<RequestOptions, 'url'>) => ({
   params: options.params,
   ...(options.paramsSerializer != null && { paramsSerializer: options.paramsSerializer }),
-  headers: buildHeaders(options.headers, options.isFormData),
+  headers: buildHeaders(options.headers),
   ...(options.withCredentials === true && { withCredentials: true }),
   ...(options.timeout != null && { timeout: options.timeout }),
 })

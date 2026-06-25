@@ -2,6 +2,7 @@ import {
   Building,
   Building2,
   LayoutDashboard,
+  Package,
   Settings,
   Shirt,
   ShoppingBag,
@@ -67,6 +68,12 @@ export const navigationConfig: NavigationGroup[] = [
         href: ROUTES.LAUNDRY.INDEX,
         icon: Shirt,
         permissions: [Permission.LaundryView],
+      },
+      {
+        titleKey: 'operationalBags',
+        href: ROUTES.OPERATIONAL_BAGS.INDEX,
+        icon: Package,
+        permissions: [Permission.BagsView],
       },
       {
         titleKey: 'companies',

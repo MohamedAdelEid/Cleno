@@ -44,6 +44,7 @@ interface DataTableProps<TData, TValue> {
   pagination?: PaginationState
   onPaginationChange?: OnChangeFn<PaginationState>
   pageSize?: number
+  onRowClick?: (row: TData) => void
   onTableReady?: (table: TanstackTable<TData>) => void
 }
 
@@ -62,6 +63,7 @@ export const DataTable = <TData, TValue>({
   pagination: controlledPagination,
   onPaginationChange,
   pageSize: initialPageSize = 10,
+  onRowClick,
   onTableReady,
 }: DataTableProps<TData, TValue>) => {
   const [sorting, setSorting] = useState<SortingState>([])
@@ -156,7 +158,12 @@ export const DataTable = <TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() ? 'selected' : undefined}
-                    className={rowClassName}
+                    className={cn(rowClassName, onRowClick && 'cursor-pointer')}
+                    onClick={(event) => {
+                      const target = event.target as HTMLElement
+                      if (target.closest('button, a, input, [role="checkbox"], label')) return
+                      onRowClick?.(row.original)
+                    }}
                   >
                     {cells}
                   </TableRow>
@@ -167,7 +174,12 @@ export const DataTable = <TData, TValue>({
                 <MotionTableRow
                   key={row.id}
                   data-state={row.getIsSelected() ? 'selected' : undefined}
-                  className={rowClassName}
+                  className={cn(rowClassName, onRowClick && 'cursor-pointer')}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement
+                    if (target.closest('button, a, input, [role="checkbox"], label')) return
+                    onRowClick?.(row.original)
+                  }}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{

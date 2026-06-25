@@ -40,14 +40,16 @@ export interface RecentOrdersColumnLabels {
   statusInLaundry: string
   statusReadyForDelivery: string
   statusDelivered: string
+  statusCancelled: string
 }
 
 const statusLabelKey: Record<OrderStatus, keyof RecentOrdersColumnLabels> = {
   [OrderStatus.OrderCreated]: 'statusOrderCreated',
-  [OrderStatus.OnTheWayToLaundry]: 'statusOnTheWayToLaundry',
+  [OrderStatus.PickedUp]: 'statusOnTheWayToLaundry',
   [OrderStatus.InLaundry]: 'statusInLaundry',
   [OrderStatus.ReadyForDelivery]: 'statusReadyForDelivery',
   [OrderStatus.Delivered]: 'statusDelivered',
+  [OrderStatus.Cancelled]: 'statusCancelled',
 }
 
 const formatDate = (value: string, isRtl: boolean) =>

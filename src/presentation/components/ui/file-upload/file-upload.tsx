@@ -30,6 +30,7 @@ export const FileUpload = ({
   disabled,
   labels,
   existingPreviewUrl,
+  existingFilePath,
   onExistingPreviewRemove,
   autoUpload = false,
   folder,
@@ -49,7 +50,7 @@ export const FileUpload = ({
   const [pendingPreview, setPendingPreview] = useState<FilePreviewItem | null>(null)
   const [showUploadedPreview, setShowUploadedPreview] = useState(!!uploadedFileUrl)
 
-  const { upload, remove, progress, isUploading, reset } = useFileUpload({
+  const { upload, remove, deleteRemote, progress, isUploading, reset } = useFileUpload({
     folder: folder ?? '',
     onError: (message) => {
       onUploadError?.(message)
@@ -115,6 +116,10 @@ export const FileUpload = ({
         return
       }
 
+      const pathsToReplace = [uploadedFilePath, existingFilePath].filter(
+        (path): path is string => !!path,
+      )
+
       setShowExistingPreview(false)
       setShowUploadedPreview(false)
       setPendingPreview(createPreviewItem(file))
@@ -122,13 +127,32 @@ export const FileUpload = ({
 
       const result = await upload(file)
       if (result) {
+        const stalePaths = pathsToReplace.filter((path) => path !== result.filePath)
+        if (stalePaths.length > 0) {
+          await Promise.all(stalePaths.map((path) => deleteRemote(path)))
+        }
+
+        if (existingFilePath && existingFilePath !== result.filePath) {
+          onExistingPreviewRemove?.()
+        }
+
         onUploadComplete?.(result)
         setPendingPreview(null)
         setShowUploadedPreview(true)
         onChange([])
       }
     },
-    [folder, onChange, onUploadComplete, onUploadError, upload],
+    [
+      deleteRemote,
+      existingFilePath,
+      folder,
+      onChange,
+      onExistingPreviewRemove,
+      onUploadComplete,
+      onUploadError,
+      upload,
+      uploadedFilePath,
+    ],
   )
 
   const handleFiles = useCallback(
@@ -176,7 +200,13 @@ export const FileUpload = ({
     }
   }
 
-  const handleRemoveExisting = () => {
+  const handleRemoveExisting = async () => {
+    if (existingFilePath) {
+      const deleted = await deleteRemote(existingFilePath)
+      if (!deleted) return
+      onFileRemoved?.(existingFilePath)
+    }
+
     setShowExistingPreview(false)
     onExistingPreviewRemove?.()
   }
@@ -333,7 +363,7 @@ export const FileUpload = ({
                       isRemote: true,
                     }}
                     removeLabel={labels.remove}
-                    onRemove={handleRemoveExisting}
+                    onRemove={() => void handleRemoveExisting()}
                     disabled={disabled}
                   />
                 ) : null}

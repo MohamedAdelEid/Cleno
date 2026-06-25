@@ -7,6 +7,7 @@ import { AppDialog } from '@/presentation/components/feedback/app-dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/presentation/components/ui/avatar'
 import { Button } from '@/presentation/components/ui/button'
 import { SearchInput } from '@/presentation/components/ui/search-input'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { cn } from '@/presentation/utils'
 
 const ROW_EASE = [0.25, 0.1, 0.25, 1] as const
@@ -34,6 +35,7 @@ interface AssignDriverDialogProps {
   orderNumber: string
   currentDriverId: string | null
   drivers: OrderDriver[]
+  isLoading?: boolean
   labels: AssignDriverDialogLabels
   onAssign?: (driver: OrderDriver) => void
   onRemove?: () => void
@@ -45,6 +47,7 @@ export const AssignDriverDialog = ({
   orderNumber,
   currentDriverId,
   drivers,
+  isLoading = false,
   labels,
   onAssign,
   onRemove,
@@ -127,6 +130,17 @@ export const AssignDriverDialog = ({
       )}
 
       <div className="max-h-72 space-y-2 overflow-y-auto pe-1">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="flex items-center gap-3 rounded-xl border px-3 py-2.5">
+              <Skeleton className="size-8 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            </div>
+          ))
+        ) : (
         <AnimatePresence initial={false}>
           {filteredDrivers.map((driver, index) => {
             const isSelected = selectedId === driver.id
@@ -175,6 +189,7 @@ export const AssignDriverDialog = ({
             )
           })}
         </AnimatePresence>
+        )}
       </div>
     </AppDialog>
   )

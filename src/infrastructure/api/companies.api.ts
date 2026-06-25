@@ -4,6 +4,7 @@ import type {
   CompanyIdsRequestDto,
   CompanyRejectRequestDto,
 } from '@/application/dtos/companies/companies-admin.dto'
+import type { CompanyCreateRequestDto } from '@/application/dtos/companies/create-company.dto'
 import { companyAdapter } from '@/application/adapters/company.adapter'
 import type { CompaniesAdminList } from '@/domain/types'
 import type { ApiResult } from '@/domain/types'
@@ -27,6 +28,13 @@ const buildQueryParams = (params: CompaniesAdminAllParams): Record<string, unkno
 }
 
 export const companiesApi = {
+  create(payload: CompanyCreateRequestDto): Promise<ApiResult<string>> {
+    return httpClient.post<string>({
+      url: API_ENDPOINTS.companies.create,
+      data: payload,
+    })
+  },
+
   async getAdminAll(params: CompaniesAdminAllParams = {}): Promise<ApiResult<CompaniesAdminList>> {
     const result = await httpClient.get<CompaniesAdminAllDataDto>({
       url: API_ENDPOINTS.companies.adminAll,
@@ -37,9 +45,21 @@ export const companiesApi = {
       return { ...result, data: null }
     }
 
-    return {
-      ...result,
-      data: companyAdapter.toAdminList(result.data),
+    try {
+      return {
+        ...result,
+        data: companyAdapter.toAdminList(result.data),
+      }
+    } catch {
+      return {
+        ...result,
+        hasValue: false,
+        data: null,
+        error: {
+          code: 'ADAPTER_ERROR',
+          message: 'Unable to parse companies response.',
+        },
+      }
     }
   },
 

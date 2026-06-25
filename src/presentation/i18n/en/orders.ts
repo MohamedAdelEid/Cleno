@@ -48,6 +48,10 @@ export const orders = {
   statusInLaundry: 'In Laundry',
   statusReadyForDelivery: 'Ready for Delivery',
   statusDelivered: 'Delivered',
+  statusCancelled: 'Cancelled',
+
+  trackingEmptyTitle: 'No active shipment',
+  trackingEmptyDesc: 'Select an order from the table to track its shipment progress.',
 
   tableTitle: 'All orders',
   tableDescription: 'Search, filter, and manage every order in your workspace.',
