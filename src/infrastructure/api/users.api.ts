@@ -21,6 +21,22 @@ import type { ApiResult } from '@/domain/types'
 import { API_ENDPOINTS } from './endpoints'
 import { httpClient } from './http-client'
 
+const buildUsersQueryParams = (params: UsersAdminAllParams): Record<string, unknown> => {
+  const query: Record<string, unknown> = {}
+
+  if (params.keyword) query.keyword = params.keyword
+  if (params.pageNumber != null) query.pageNumber = params.pageNumber
+  if (params.pageSize != null) query.pageSize = params.pageSize
+  if (params.status != null) query.status = params.status
+  if (params.roleId) query.roleId = params.roleId
+  if (params.sortBy) query.sortBy = params.sortBy
+  if (params.sortDirection) query.sortDirection = params.sortDirection
+  if (params.trendYear != null) query.trendYear = params.trendYear
+  if (params.trendMonth != null) query.trendMonth = params.trendMonth
+
+  return query
+}
+
 export interface UsersAdminList {
   stats: ManagedUserStats
   trends: ManagedUserStatTrends
@@ -31,7 +47,7 @@ export const usersApi = {
   async getAdminAll(params: UsersAdminAllParams = {}): Promise<ApiResult<UsersAdminList>> {
     const result = await httpClient.get<UsersAdminAllDataDto>({
       url: API_ENDPOINTS.users.adminAll,
-      params,
+      params: buildUsersQueryParams(params),
     })
 
     if (!result.hasValue || !result.data) {

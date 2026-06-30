@@ -88,6 +88,7 @@ export const roles = {
   permissionBranchesCreate: 'إنشاء فروع',
   permissionOrdersView: 'عرض الطلبات',
   permissionOrdersUpdate: 'تحديث الطلبات',
+  permissionDriversView: 'عرض السائقين',
   permissionLaundryView: 'عرض الغسيل',
   permissionBagsView: 'عرض الحقائب التشغيلية',
   permissionCustomersView: 'عرض العملاء',

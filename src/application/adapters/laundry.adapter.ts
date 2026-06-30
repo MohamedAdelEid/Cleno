@@ -140,11 +140,13 @@ const readBoardNote = (dto: LaundryBoardItemDto): unknown =>
 const pickLatestOrderNote = (notes: LaundryOrderNote[]): LaundryOrderNote | null => {
   if (!notes.length) return null
 
-  return [...notes].sort((a, b) => {
+  const sorted = [...notes].sort((a, b) => {
     const aTime = new Date(a.updatedAt ?? a.createdAt).getTime()
     const bTime = new Date(b.updatedAt ?? b.createdAt).getTime()
     return bTime - aTime
-  })[0]
+  })
+
+  return sorted[0] ?? null
 }
 
 const splitBags = (bags: LaundryBoardItemDto['bags']) => {

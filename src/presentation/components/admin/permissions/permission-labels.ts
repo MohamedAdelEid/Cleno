@@ -10,6 +10,7 @@ export interface PermissionLabels {
   permissionBranchesCreate: string
   permissionOrdersView: string
   permissionOrdersUpdate: string
+  permissionDriversView: string
   permissionLaundryView: string
   permissionBagsView: string
   permissionCustomersView: string
@@ -36,6 +37,7 @@ export const permissionLabelKey: Record<Permission, keyof PermissionLabels> = {
   'branches.create': 'permissionBranchesCreate',
   'orders.view': 'permissionOrdersView',
   'orders.update': 'permissionOrdersUpdate',
+  'drivers.view': 'permissionDriversView',
   'laundry.view': 'permissionLaundryView',
   'bags.view': 'permissionBagsView',
   'customers.view': 'permissionCustomersView',
@@ -70,6 +72,7 @@ export const buildPermissionLabels = (t: TranslateFn): PermissionLabels => ({
   permissionBranchesCreate: t('permissionBranchesCreate'),
   permissionOrdersView: t('permissionOrdersView'),
   permissionOrdersUpdate: t('permissionOrdersUpdate'),
+  permissionDriversView: t('permissionDriversView'),
   permissionLaundryView: t('permissionLaundryView'),
   permissionBagsView: t('permissionBagsView'),
   permissionCustomersView: t('permissionCustomersView'),

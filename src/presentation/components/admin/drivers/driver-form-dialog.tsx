@@ -89,6 +89,7 @@ export const DriverFormDialog = ({
             email: driver.email,
             phone: driver.phone,
             status: driver.status,
+            password: '',
             photo: [],
             photoPath: driver.photoPath ?? undefined,
             photoUrl: driver.photoUrl ?? undefined,
@@ -255,7 +256,7 @@ export const DriverFormDialog = ({
             <SearchableSelect
               value={String(status)}
               onChange={(value) =>
-                setValue('status', Number(value) as DriverFormValues['status'], {
+                setValue('status', Number(value) as DriverAvailability, {
                   shouldValidate: true,
                 })
               }

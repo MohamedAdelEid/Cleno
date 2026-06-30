@@ -4,10 +4,10 @@ import { DriverAvailability } from '@/domain/enums/driver-availability.enum'
 
 const FILE_MAX_SIZE = 5 * 1024 * 1024
 
-const driverStatusValues = [
-  DriverAvailability.Available,
-  DriverAvailability.Unavailable,
-] as [DriverAvailability, DriverAvailability]
+const driverStatusSchema = z.union([
+  z.literal(DriverAvailability.Available),
+  z.literal(DriverAvailability.Unavailable),
+])
 
 const validateImageFiles = (
   files: File[],
@@ -57,7 +57,7 @@ export const createDriverFormSchema = (
       .min(1, messages.emailRequired)
       .refine((value) => z.email().safeParse(value).success, messages.emailInvalid),
     phone: z.string().trim().min(1, messages.phoneRequired).max(30, messages.phoneMax),
-    status: z.enum(driverStatusValues),
+    status: driverStatusSchema,
     photo: z
       .array(z.instanceof(File))
       .max(1)
@@ -72,14 +72,18 @@ export const createDriverFormSchema = (
     removePhoto: z.boolean().optional(),
   }
 
-  if (mode === 'create') {
-    return z.object({
-      ...baseFields,
-      password: z.string().trim().min(1, messages.passwordRequired).min(8, messages.passwordMin),
-    })
-  }
+  const passwordSchema =
+    mode === 'create'
+      ? z.string().trim().min(1, messages.passwordRequired).min(8, messages.passwordMin)
+      : z
+          .string()
+          .trim()
+          .refine((value) => !value || value.length >= 8, messages.passwordMin)
 
-  return z.object(baseFields)
+  return z.object({
+    ...baseFields,
+    password: passwordSchema,
+  })
 }
 
 export type DriverFormValues = z.infer<ReturnType<typeof createDriverFormSchema>>

@@ -1,5 +1,5 @@
 import { AppDialog } from '@/presentation/components/feedback/app-dialog'
-import { Avatar, AvatarFallback, AvatarImage } from '@/presentation/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/presentation/components/ui/avatar'
 import { getManagedUserInitials } from './users.data'
 
 interface UserPhotoPreviewDialogProps {

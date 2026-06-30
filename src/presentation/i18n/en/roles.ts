@@ -90,6 +90,7 @@ export const roles = {
   permissionBranchesCreate: 'Create branches',
   permissionOrdersView: 'View orders',
   permissionOrdersUpdate: 'Update orders',
+  permissionDriversView: 'View drivers',
   permissionLaundryView: 'View laundry',
   permissionBagsView: 'View operational bags',
   permissionCustomersView: 'View customers',
