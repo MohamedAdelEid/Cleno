@@ -14,12 +14,16 @@ export interface LaundryBag {
   bagId: string
   status: BagStatus
   verified: boolean
+  quantity: number
 }
 
 export interface LaundryItem {
   id: string
   name: string
   quantity: number
+  orderedQuantity?: number
+  assignedQuantity?: number
+  remainingQuantity?: number
 }
 
 export interface ItemBagAssignment {
@@ -46,22 +50,37 @@ export interface LaundryIncidentReply {
 
 export interface LaundryIncident {
   id: string
-  slug?: string
-  type: string
+  slug: string
+  type: number
+  typeLabel: string
+  title: string
   content: string
+  stageLabel: string
   createdAt: string
   author: string
   stage: LaundryWorkflowStage
   replies: LaundryIncidentReply[]
-  isOpen?: boolean
-  replyCount?: number
+  isOpen: boolean
+  replyCount: number
+  orderNumber?: string
+  companyName?: string
+  orderSlug?: string
+}
+
+export interface LaundryOrderNoteUser {
+  id: string
+  fullName: string
+  email: string
+  avatarUrl: string | null
 }
 
 export interface LaundryOrderNote {
   id: string
   content: string
   createdAt: string
+  updatedAt: string | null
   author: string
+  lastModifiedBy: LaundryOrderNoteUser | null
 }
 
 export interface LaundryOrder {
@@ -76,12 +95,14 @@ export interface LaundryOrder {
   bagAssignments: ItemBagAssignment[]
   items: LaundryItem[]
   itemCount: number
+  pickupDate: string | null
   pickupTime: string
+  deliverByDate: string | null
   deliverBy: string
   inLaundrySince: string | null
   driver: LaundryDriver | null
   incidents: LaundryIncident[]
-  notes: LaundryOrderNote[]
+  note: LaundryOrderNote | null
   slaDeadline: string | null
   hasOpenIncidents?: boolean
 }

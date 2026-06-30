@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import {
@@ -13,13 +13,35 @@ import {
   ActivityTab,
   type CompanyDetailsTab,
 } from '@/presentation/components/admin/companies/details'
-import { companyDetailsData } from '@/presentation/components/admin/companies/details/company-details.data'
+import { useCompanyDetails } from '@/presentation/components/admin/companies/hooks/use-company-details'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { PAGE_EASE } from '@/presentation/utils'
+import { ROUTES } from '@/presentation/routes/routes.constants'
+import { useBreadcrumbStore } from '@/presentation/store/breadcrumb.store'
 
 const VALID_TABS: CompanyDetailsTab[] = ['overview', 'orders', 'invoices', 'branches', 'activity']
 
+const CompanyDetailsSkeleton = () => (
+  <div className="space-y-6">
+    <div className="flex items-center gap-4">
+      <Skeleton className="size-14 rounded-full" />
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-56" />
+        <Skeleton className="h-5 w-32" />
+      </div>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <Skeleton key={index} className="h-24 rounded-xl" />
+      ))}
+    </div>
+    <Skeleton className="h-10 w-full rounded-lg" />
+    <Skeleton className="h-96 w-full rounded-xl" />
+  </div>
+)
+
 export const CompanyDetailsPage = () => {
-  const { companySlug: _companySlug } = useParams<{ companySlug: string }>()
+  const { companySlug } = useParams<{ companySlug: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const tabParam = searchParams.get('tab') as CompanyDetailsTab | null
@@ -30,7 +52,29 @@ export const CompanyDetailsPage = () => {
     tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'overview',
   )
 
-  const company = companyDetailsData
+  const {
+    company,
+    orders,
+    invoices,
+    branches,
+    activities,
+    isLoading,
+    isTabLoading,
+    toggleActive,
+  } = useCompanyDetails({
+    slug: companySlug,
+    activeTab,
+  })
+
+  const setDynamicLabel = useBreadcrumbStore((state) => state.setDynamicLabel)
+
+  useEffect(() => {
+    setDynamicLabel(company?.slug ?? companySlug ?? null)
+
+    return () => {
+      setDynamicLabel(null)
+    }
+  }, [company?.slug, companySlug, setDynamicLabel])
 
   useEffect(() => {
     if (tabParam && VALID_TABS.includes(tabParam) && tabParam !== activeTab) {
@@ -92,8 +136,8 @@ export const CompanyDetailsPage = () => {
   const handleViewAllActivity = useCallback(() => handleTabChange('activity'), [handleTabChange])
 
   const handleToggleActive = useCallback(() => {
-    // In real app, would call API to toggle active state
-  }, [])
+    void toggleActive()
+  }, [toggleActive])
 
   const handleOrderClick = useCallback((_orderId: string) => {
     // In real app, would navigate to order details
@@ -102,11 +146,19 @@ export const CompanyDetailsPage = () => {
   const branchesSearch = useMemo(() => {
     if (searchParam) return searchParam
     if (activeTab === 'branches' && branchParam) {
-      const branch = company.branches.find((b) => b.slug === branchParam)
+      const branch = branches.find((b) => b.slug === branchParam)
       return branch?.name ?? branchParam
     }
     return ''
-  }, [searchParam, activeTab, branchParam, company.branches])
+  }, [searchParam, activeTab, branchParam, branches])
+
+  if (isLoading) {
+    return <CompanyDetailsSkeleton />
+  }
+
+  if (!company) {
+    return <Navigate to={ROUTES.COMPANIES.INDEX} replace />
+  }
 
   return (
     <div className="space-y-6">
@@ -134,10 +186,11 @@ export const CompanyDetailsPage = () => {
           )}
           {activeTab === 'orders' && (
             <OrdersTab
-              orders={company.recentOrders}
-              branches={company.branches}
+              orders={orders}
+              branches={branches}
               branchFilter={branchFilter}
               search={searchParam}
+              isLoading={isTabLoading}
               onBranchFilterChange={handleBranchFilterChange}
               onSearchChange={handleSearchChange}
               onOrderClick={handleOrderClick}
@@ -145,25 +198,29 @@ export const CompanyDetailsPage = () => {
           )}
           {activeTab === 'invoices' && (
             <InvoicesTab
-              invoices={company.invoices}
-              branches={company.branches}
+              invoices={invoices}
+              branches={branches}
               branchFilter={branchFilter}
               search={searchParam}
+              isLoading={isTabLoading}
               onBranchFilterChange={handleBranchFilterChange}
               onSearchChange={handleSearchChange}
             />
           )}
           {activeTab === 'branches' && (
             <BranchesTab
-              branches={company.branches}
+              branches={branches}
               search={branchesSearch}
+              isLoading={isTabLoading}
               onSearchChange={handleSearchChange}
               focusedBranchSlug={branchParam ?? undefined}
               onViewOrders={(slug) => navigateToTabWithBranch('orders', slug)}
               onViewInvoices={(slug) => navigateToTabWithBranch('invoices', slug)}
             />
           )}
-          {activeTab === 'activity' && <ActivityTab activities={company.activities} />}
+          {activeTab === 'activity' && (
+            <ActivityTab activities={activities} isLoading={isTabLoading} />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

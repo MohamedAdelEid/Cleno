@@ -1,7 +1,6 @@
 export const roles = {
   pageTitle: 'الأدوار والتفضيلات',
-  pageDescription:
-    'حدّد مستويات الوصول، وعيّن الصلاحيات، وأدر المستخدمين عبر عمليات الغسيل.',
+  pageDescription: 'حدّد مستويات الوصول، وعيّن الصلاحيات، وأدر المستخدمين عبر عمليات الغسيل.',
   addRole: 'إضافة دور',
   addRoleComingSoon: 'نموذج إنشاء الدور سيكون متاحاً في الخطوة التالية.',
   seeAll: 'عرض الكل',
@@ -42,8 +41,7 @@ export const roles = {
   usersDialogDescription: 'المستخدمون المعيّنون لـ {{role}}.',
   unassign: 'إلغاء التعيين',
   unassignTitle: 'إزالة المستخدم من الدور',
-  unassignDescription:
-    'هل أنت متأكد من إزالة {{name}} من هذا الدور؟ سيفقد الصلاحيات المرتبطة به.',
+  unassignDescription: 'هل أنت متأكد من إزالة {{name}} من هذا الدور؟ سيفقد الصلاحيات المرتبطة به.',
   assignDialogTitle: 'تعيين مستخدمين',
   assignDialogDescription: 'اختر المستخدمين لتعيينهم لـ {{role}}.',
   assignSearchPlaceholder: 'ابحث عن مستخدمين…',
@@ -135,4 +133,6 @@ export const roles = {
   permissionsLoadError: 'تعذر تحميل الصلاحيات. يرجى المحاولة مرة أخرى.',
   toastRoleUpdated: 'تم تحديث الدور',
   toastRoleUpdatedDesc: 'تم تحديث "{{name}}".',
+  toastRoleUpdateFailed: 'تعذر تحديث الدور',
+  toastRoleUpdateFailedDesc: 'حدث خطأ أثناء تحديث الدور.',
 } as const

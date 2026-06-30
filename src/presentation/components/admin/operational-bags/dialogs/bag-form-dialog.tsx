@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import type { OperationalBag } from '@/domain/entities'
-import { OperationalBagSystemStatus } from '@/domain/enums'
+import { OperationalBagStatus, OperationalBagSystemStatus } from '@/domain/enums'
 import {
   createOperationalBagFormSchema,
   emptyOperationalBagFormValues,
@@ -12,8 +12,11 @@ import {
 import { AppDialog } from '@/presentation/components/feedback/app-dialog'
 import { Button } from '@/presentation/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/presentation/components/ui/field'
-import { Input } from '@/presentation/components/ui/input'
-import { SearchableSelect, type SearchableSelectOption } from '@/presentation/components/ui/searchable-select'
+import { Input, Textarea } from '@/presentation/components/ui/input'
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from '@/presentation/components/ui/searchable-select'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 
 interface BagFormDialogProps {
@@ -21,7 +24,7 @@ interface BagFormDialogProps {
   onOpenChange: (open: boolean) => void
   mode: 'create' | 'edit'
   bag?: OperationalBag | null
-  onSubmit: (values: OperationalBagFormValues) => boolean
+  onSubmit: (values: OperationalBagFormValues) => Promise<boolean>
   isBagIdTaken: (bagId: string, excludeId?: string) => boolean
 }
 
@@ -42,6 +45,7 @@ export const BagFormDialog = ({
         bagIdMin: t('validationBagIdMin'),
         bagIdMax: t('validationBagIdMax'),
         bagIdFormat: t('validationBagIdFormat'),
+        weightPositive: t('validationWeightPositive'),
       }),
     [t],
   )
@@ -60,13 +64,20 @@ export const BagFormDialog = ({
   })
 
   const systemStatus = watch('systemStatus')
+  const operationalStatus = watch('operationalStatus')
 
   useEffect(() => {
     if (!open) return
 
     reset(
       mode === 'edit' && bag
-        ? { bagId: bag.bagId, systemStatus: bag.systemStatus }
+        ? {
+            bagId: bag.bagId,
+            notes: bag.notes,
+            weight: bag.weight,
+            systemStatus: bag.systemStatus,
+            operationalStatus: bag.operationalStatus,
+          }
         : emptyOperationalBagFormValues,
     )
   }, [bag, mode, open, reset])
@@ -79,13 +90,25 @@ export const BagFormDialog = ({
     [t],
   )
 
-  const handleFormSubmit = handleSubmit((values) => {
+  const operationalOptions: SearchableSelectOption[] = useMemo(
+    () => [
+      { value: OperationalBagStatus.Ready, label: t('opReady') },
+      { value: OperationalBagStatus.Assigned, label: t('opAssigned') },
+      { value: OperationalBagStatus.Processing, label: t('opProcessing') },
+      { value: OperationalBagStatus.OnTheWay, label: t('opOnTheWay') },
+      { value: OperationalBagStatus.InTransit, label: t('opInTransit') },
+      { value: OperationalBagStatus.Missing, label: t('opMissing') },
+    ],
+    [t],
+  )
+
+  const handleFormSubmit = handleSubmit(async (values) => {
     if (isBagIdTaken(values.bagId, bag?.id)) {
       setError('bagId', { message: t('validationBagIdUnique') })
       return
     }
 
-    const success = onSubmit(values)
+    const success = await onSubmit(values)
     if (success) {
       onOpenChange(false)
     }
@@ -96,11 +119,18 @@ export const BagFormDialog = ({
       open={open}
       onOpenChange={onOpenChange}
       title={mode === 'create' ? t('formCreateTitle') : t('formEditTitle')}
-      description={mode === 'create' ? t('formCreateDesc') : t('formEditDesc', { bagId: bag?.bagId ?? '' })}
+      description={
+        mode === 'create' ? t('formCreateDesc') : t('formEditDesc', { bagId: bag?.bagId ?? '' })
+      }
       size="sm"
       footer={
         <>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
             {t('cancel')}
           </Button>
           <Button type="submit" form="bag-form" disabled={isSubmitting}>
@@ -121,21 +151,73 @@ export const BagFormDialog = ({
           <FieldError message={errors.bagId?.message} />
         </Field>
 
-        <Field invalid={!!errors.systemStatus}>
-          <FieldLabel>{t('formSystemStatus')}</FieldLabel>
-          <SearchableSelect
-            value={systemStatus}
-            onChange={(value) =>
-              setValue('systemStatus', value as OperationalBagFormValues['systemStatus'], {
-                shouldValidate: true,
-              })
-            }
-            options={systemOptions}
-            placeholder={t('formSystemStatus')}
-            allowCustom={false}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field invalid={!!errors.weight}>
+            <FieldLabel htmlFor="weight">{t('formWeight')}</FieldLabel>
+            <Input
+              id="weight"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder={t('formWeightPlaceholder')}
+              {...register('weight', {
+                setValueAs: (value) => (value === '' ? null : Number(value)),
+              })}
+            />
+            <FieldError message={errors.weight?.message} />
+          </Field>
+
+          {mode === 'edit' ? (
+            <Field invalid={!!errors.operationalStatus}>
+              <FieldLabel>{t('formOperationalStatus')}</FieldLabel>
+              <SearchableSelect
+                value={operationalStatus}
+                onChange={(value) =>
+                  setValue(
+                    'operationalStatus',
+                    value as OperationalBagFormValues['operationalStatus'],
+                    {
+                      shouldValidate: true,
+                    },
+                  )
+                }
+                options={operationalOptions}
+                placeholder={t('formOperationalStatus')}
+                allowCustom={false}
+              />
+              <FieldError message={errors.operationalStatus?.message} />
+            </Field>
+          ) : null}
+        </div>
+
+        <Field invalid={!!errors.notes}>
+          <FieldLabel htmlFor="notes">{t('formNotes')}</FieldLabel>
+          <Textarea
+            id="notes"
+            rows={3}
+            placeholder={t('formNotesPlaceholder')}
+            {...register('notes')}
           />
-          <FieldError message={errors.systemStatus?.message} />
+          <FieldError message={errors.notes?.message} />
         </Field>
+
+        {mode === 'edit' ? (
+          <Field invalid={!!errors.systemStatus}>
+            <FieldLabel>{t('formSystemStatus')}</FieldLabel>
+            <SearchableSelect
+              value={systemStatus}
+              onChange={(value) =>
+                setValue('systemStatus', value as OperationalBagFormValues['systemStatus'], {
+                  shouldValidate: true,
+                })
+              }
+              options={systemOptions}
+              placeholder={t('formSystemStatus')}
+              allowCustom={false}
+            />
+            <FieldError message={errors.systemStatus?.message} />
+          </Field>
+        ) : null}
       </form>
     </AppDialog>
   )

@@ -2,8 +2,10 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { PaginationState, RowSelectionState } from '@tanstack/react-table'
 import { CircleCheck, CircleOff, Package, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import type { OperationalBag } from '@/domain/entities'
+import type { ApiResult } from '@/domain/types'
 import { OperationalBagStatus, OperationalBagSystemStatus } from '@/domain/enums'
 import type { OperationalBagFormValues } from '@/domain/schemas'
 import { notify } from '@/infrastructure/libs/toast/toast'
@@ -28,6 +30,7 @@ import { ConfirmDialog } from '@/presentation/components/feedback/confirm-dialog
 import { Button } from '@/presentation/components/ui/button'
 import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useTranslation } from '@/presentation/hooks/use-translation'
+import { ROUTES } from '@/presentation/routes/routes.constants'
 import { createBagsColumns, type BagsColumnLabels } from './bags-columns'
 
 interface BagsTableSectionProps {
@@ -45,14 +48,15 @@ interface BagsTableSectionProps {
   onClearFilters: () => void
   paginationState: PaginationState
   onPaginationStateChange: Dispatch<SetStateAction<PaginationState>>
-  onCreateBag: (values: OperationalBagFormValues) => boolean
-  onUpdateBag: (id: string, values: OperationalBagFormValues) => boolean
-  onDeleteBag: (id: string) => void
-  onBulkDeleteBags: (ids: string[]) => void
+  onCreateBag: (values: OperationalBagFormValues) => Promise<boolean>
+  onUpdateBag: (id: string, values: OperationalBagFormValues) => Promise<boolean>
+  onDeleteBag: (id: string) => Promise<boolean>
+  onBulkDeleteBags: (ids: string[]) => Promise<boolean>
   onBulkUpdateSystemStatus: (
     ids: string[],
     status: OperationalBag['systemStatus'],
-  ) => void
+  ) => Promise<boolean>
+  onGetBagDetails: (slug: string) => Promise<ApiResult<OperationalBag>>
   isBagIdTaken: (bagId: string, excludeId?: string) => boolean
   onRegisterOpenCreate?: (openCreate: () => void) => void
 }
@@ -95,11 +99,13 @@ export const BagsTableSection = ({
   onDeleteBag,
   onBulkDeleteBags,
   onBulkUpdateSystemStatus,
+  onGetBagDetails,
   isBagIdTaken,
   onRegisterOpenCreate,
 }: BagsTableSectionProps) => {
   const { t } = useTranslation('operationalBags')
   const { t: tCommon } = useTranslation('common')
+  const navigate = useNavigate()
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -165,16 +171,6 @@ export const BagsTableSection = ({
     [t],
   )
 
-  const columns = useMemo(
-    () =>
-      createBagsColumns(columnLabels, {
-        onViewClick: setDetailsBag,
-        onEditClick: openEdit,
-        onDeleteClick: setDeleteTarget,
-      }),
-    [columnLabels, openEdit],
-  )
-
   const paginationLabels = useMemo(
     () => ({
       showing: tCommon('paginationShowing'),
@@ -185,72 +181,134 @@ export const BagsTableSection = ({
     [tCommon],
   )
 
-  const handleFormSubmit = (values: OperationalBagFormValues) => {
+  const handleViewBag = useCallback(
+    async (bag: OperationalBag) => {
+      const result = await onGetBagDetails(bag.slug)
+
+      if (result.hasValue && result.data) {
+        setDetailsBag(result.data)
+      } else {
+        notify.error({
+          title: t('detailsTitle'),
+          description: result.error?.message ?? t('toastActionFailed'),
+        })
+      }
+    },
+    [onGetBagDetails, t],
+  )
+
+  const navigateToOrder = useCallback(
+    (bag: OperationalBag) => {
+      if (!bag.currentOrderNumber) return
+      navigate(ROUTES.ORDERS.withSearch(bag.currentOrderNumber))
+    },
+    [navigate],
+  )
+
+  const navigateToCompany = useCallback(
+    (bag: OperationalBag) => {
+      if (!bag.company?.name) return
+      navigate(ROUTES.COMPANIES.withSearch(bag.company.name))
+    },
+    [navigate],
+  )
+
+  const columns = useMemo(
+    () =>
+      createBagsColumns(columnLabels, {
+        onViewClick: (bag) => {
+          void handleViewBag(bag)
+        },
+        onEditClick: openEdit,
+        onDeleteClick: setDeleteTarget,
+        onOrderClick: navigateToOrder,
+        onCompanyClick: navigateToCompany,
+      }),
+    [columnLabels, handleViewBag, navigateToCompany, navigateToOrder, openEdit],
+  )
+
+  const handleFormSubmit = async (values: OperationalBagFormValues) => {
     if (formMode === 'create') {
-      const success = onCreateBag(values)
+      const success = await onCreateBag(values)
       if (success) {
         notify.success({
           title: t('toastCreated'),
           description: t('toastCreatedDesc', { bagId: values.bagId }),
         })
+      } else {
+        notify.error({ title: t('toastCreateFailed'), description: t('toastActionFailed') })
       }
       return success
     }
 
     if (!editingBag) return false
 
-    const success = onUpdateBag(editingBag.id, values)
+    const success = await onUpdateBag(editingBag.id, values)
     if (success) {
       notify.success({
         title: t('toastUpdated'),
         description: t('toastUpdatedDesc', { bagId: values.bagId }),
       })
+    } else {
+      notify.error({ title: t('toastUpdateFailed'), description: t('toastActionFailed') })
     }
     return success
   }
 
-  const handleSingleDelete = () => {
+  const handleSingleDelete = async () => {
     if (!deleteTarget || deleteTarget === 'bulk') return
 
     setIsMutating(true)
-    onDeleteBag(deleteTarget.id)
-    notify.success({
-      title: t('toastDeleted'),
-      description: t('toastDeletedDesc', { bagId: deleteTarget.bagId }),
-    })
+    const success = await onDeleteBag(deleteTarget.id)
+    if (success) {
+      notify.success({
+        title: t('toastDeleted'),
+        description: t('toastDeletedDesc', { bagId: deleteTarget.bagId }),
+      })
+    } else {
+      notify.error({ title: t('toastDeleteFailed'), description: t('toastActionFailed') })
+    }
     setDeleteTarget(null)
     clearSelection()
     setIsMutating(false)
   }
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (!selectedIds.length) return
 
     setIsMutating(true)
-    onBulkDeleteBags(selectedIds)
-    notify.success({
-      title: t('toastBulkDeleted'),
-      description: t('toastBulkDeletedDesc', { count: selectedIds.length }),
-    })
+    const success = await onBulkDeleteBags(selectedIds)
+    if (success) {
+      notify.success({
+        title: t('toastBulkDeleted'),
+        description: t('toastBulkDeletedDesc', { count: selectedIds.length }),
+      })
+    } else {
+      notify.error({ title: t('toastDeleteFailed'), description: t('toastActionFailed') })
+    }
     setDeleteTarget(null)
     clearSelection()
     setIsMutating(false)
   }
 
-  const handleBulkStatusChange = () => {
+  const handleBulkStatusChange = async () => {
     if (!pendingBulkAction?.ids.length) return
 
     setIsMutating(true)
-    onBulkUpdateSystemStatus(
+    const success = await onBulkUpdateSystemStatus(
       pendingBulkAction.ids,
       pendingBulkAction.type === 'activate'
         ? OperationalBagSystemStatus.Active
         : OperationalBagSystemStatus.Inactive,
     )
-    notify.success({
-      title: t('toastBulkStatusUpdated'),
-      description: t('toastBulkStatusUpdatedDesc', { count: pendingBulkAction.ids.length }),
-    })
+    if (success) {
+      notify.success({
+        title: t('toastBulkStatusUpdated'),
+        description: t('toastBulkStatusUpdatedDesc', { count: pendingBulkAction.ids.length }),
+      })
+    } else {
+      notify.error({ title: t('toastUpdateFailed'), description: t('toastActionFailed') })
+    }
     setPendingBulkAction(null)
     clearSelection()
     setIsMutating(false)
@@ -341,9 +399,7 @@ export const BagsTableSection = ({
               onPageChange={(pageIndex) =>
                 onPaginationStateChange((current) => ({ ...current, pageIndex }))
               }
-              onPageSizeChange={(pageSize) =>
-                onPaginationStateChange({ pageIndex: 0, pageSize })
-              }
+              onPageSizeChange={(pageSize) => onPaginationStateChange({ pageIndex: 0, pageSize })}
               labels={paginationLabels}
             />
           ) : undefined
@@ -368,7 +424,13 @@ export const BagsTableSection = ({
             <p className="text-sm font-medium text-foreground">{t('emptyFilterTitle')}</p>
             <p className="mt-1 max-w-sm text-xs text-muted-foreground">{t('emptyFilterDesc')}</p>
             {hasActiveFilters && (
-              <Button type="button" variant="outline" size="sm" className="mt-5" onClick={onClearFilters}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-5"
+                onClick={onClearFilters}
+              >
                 {t('clearFilters')}
               </Button>
             )}

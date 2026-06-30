@@ -7,6 +7,7 @@ export const Permission = {
   BranchesCreate: 'branches.create',
   OrdersView: 'orders.view',
   OrdersUpdate: 'orders.update',
+  DriversView: 'drivers.view',
   LaundryView: 'laundry.view',
   BagsView: 'bags.view',
   CustomersView: 'customers.view',

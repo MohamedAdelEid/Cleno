@@ -46,18 +46,26 @@ export interface CompanyOrder {
 }
 
 export type CompanyActivityType =
-  | 'order_created'
-  | 'order_delivered'
-  | 'invoice_generated'
-  | 'payment_received'
+  | 'company_registered'
+  | 'company_approved'
+  | 'branch_created'
   | 'branch_added'
-  | 'status_changed'
+  | 'order_created'
   | 'driver_assigned'
   | 'order_picked_up'
+  | 'order_in_laundry'
+  | 'order_ready'
+  | 'order_delivered'
+  | 'order_cancelled'
+  | 'invoice_generated'
+  | 'incident_reported'
+  | 'payment_received'
+  | 'status_changed'
 
 export interface CompanyActivity {
   id: string
   type: CompanyActivityType
+  title: string
   description: string
   user: string
   timestamp: string

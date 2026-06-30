@@ -20,9 +20,11 @@ export const OperationalBagsPage = () => {
   const {
     bags,
     stats,
+    statTrends,
     paginatedBags,
     totalRows,
     isLoading,
+    isStatsLoading,
     keyword,
     setKeyword,
     systemFilter,
@@ -38,6 +40,7 @@ export const OperationalBagsPage = () => {
     deleteBag,
     bulkDeleteBags,
     bulkUpdateSystemStatus,
+    getBagDetails,
     isBagIdTaken,
   } = useOperationalBags()
 
@@ -55,7 +58,7 @@ export const OperationalBagsPage = () => {
         }
       />
 
-      <BagsOverviewSection stats={stats} isLoading={isLoading} />
+      <BagsOverviewSection stats={stats} statTrends={statTrends} isLoading={isStatsLoading} />
 
       <BagsTableSection
         bags={bags}
@@ -77,6 +80,7 @@ export const OperationalBagsPage = () => {
         onDeleteBag={deleteBag}
         onBulkDeleteBags={bulkDeleteBags}
         onBulkUpdateSystemStatus={bulkUpdateSystemStatus}
+        onGetBagDetails={getBagDetails}
         isBagIdTaken={isBagIdTaken}
         onRegisterOpenCreate={handleRegisterOpenCreate}
       />

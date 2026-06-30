@@ -15,6 +15,7 @@ import type { LaundryOrder } from '@/domain/entities/laundry-order.entity'
 import { BagStatus, LaundryWorkflowStage, UrgencyLevel } from '@/domain/enums'
 import { Button } from '@/presentation/components/ui/button'
 import { Checkbox } from '@/presentation/components/ui/checkbox'
+import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn } from '@/presentation/utils'
 
 import { OrderIncidentTrigger } from '../incidents/order-incident-trigger'
@@ -30,37 +31,8 @@ import { UrgencyBadge } from './urgency-badge'
 
 const LAYOUT_EASE = [0.25, 0.1, 0.25, 1] as const
 
-export interface OrderCardLabels {
-  items: string
-  bags: string
-  pickupTime: string
-  deliverBy: string
-  assignedBags: string
-  bagsExpanded: string
-  bagStatusOnTheWay: string
-  bagStatusProcessing: string
-  bagStatusReady: string
-  inLaundryFor: string
-  urgencyWarning: string
-  urgencyUrgent: string
-  urgencyOverdue: string
-  markReceived: string
-  markReady: string
-  dispatch: string
-  assignBags: string
-  assignDriver: string
-  scanVerify: string
-  addNote: string
-  notePlaceholder: string
-  noteSubmit: string
-  noteCancel: string
-  pickupBags: string
-  processingBags: string
-}
-
 interface OrderCardProps {
   order: LaundryOrder
-  labels: OrderCardLabels
   selected?: boolean
   onSelectChange?: (orderId: string, selected: boolean) => void
   onStageAction?: (order: LaundryOrder) => void
@@ -70,20 +42,19 @@ interface OrderCardProps {
   onAddNote?: (orderId: string, content: string) => void
 }
 
-const getBagStatusLabel = (status: BagStatus, labels: OrderCardLabels): string => {
+const getBagStatusLabel = (status: BagStatus, t: (key: string) => string): string => {
   switch (status) {
     case BagStatus.OnTheWay:
-      return labels.bagStatusOnTheWay
+      return t('bagStatusOnTheWay')
     case BagStatus.Processing:
-      return labels.bagStatusProcessing
+      return t('bagStatusProcessing')
     case BagStatus.Ready:
-      return labels.bagStatusReady
+      return t('bagStatusReady')
   }
 }
 
 export const OrderCard = ({
   order,
-  labels,
   selected = false,
   onSelectChange,
   onStageAction,
@@ -92,6 +63,7 @@ export const OrderCard = ({
   onAssignDriver,
   onAddNote,
 }: OrderCardProps) => {
+  const { t } = useTranslation('laundry')
   const [bagsExpanded, setBagsExpanded] = useState(false)
 
   const customerInitial = order.customer.name.charAt(0).toUpperCase()
@@ -101,13 +73,13 @@ export const OrderCard = ({
 
   const displayBags = isIncoming ? order.pickupBags : order.processingBags
   const bagCount = isIncoming ? getPickupBagCount(order) : getProcessingBagCount(order)
-  const bagsLabel = isIncoming ? labels.pickupBags : labels.processingBags
+  const bagsLabel = isIncoming ? t('pickupBags') : t('processingBags')
 
   const stageActionLabel = isIncoming
-    ? labels.markReceived
+    ? t('markReceived')
     : isInLaundry
-      ? labels.markReady
-      : labels.dispatch
+      ? t('markReady')
+      : t('dispatch')
 
   const StageIcon = isIncoming ? CheckCircle2 : isInLaundry ? Package : Send
 
@@ -142,11 +114,11 @@ export const OrderCard = ({
               urgency={order.urgency}
               label={
                 order.urgency === UrgencyLevel.Warning
-                  ? labels.urgencyWarning
+                  ? t('urgencyWarning')
                   : order.urgency === UrgencyLevel.Urgent
-                    ? labels.urgencyUrgent
+                    ? t('urgencyUrgent')
                     : order.urgency === UrgencyLevel.Overdue
-                      ? labels.urgencyOverdue
+                      ? t('urgencyOverdue')
                       : ''
               }
             />
@@ -161,39 +133,33 @@ export const OrderCard = ({
 
         <div className="flex shrink-0 items-center gap-1">
           <OrderIncidentTrigger order={order} />
-          {onAddNote && (
-            <OrderNoteTrigger
-              order={order}
-              onAddNote={onAddNote}
-              labels={{
-                title: labels.addNote,
-                placeholder: labels.notePlaceholder,
-                submit: labels.noteSubmit,
-                cancel: labels.noteCancel,
-              }}
-            />
-          )}
+          {onAddNote && <OrderNoteTrigger order={order} onAddNote={onAddNote} />}
         </div>
       </div>
 
       {isInLaundry && order.inLaundrySince && (
         <div className="px-4 pb-2">
-          <ProcessingTimer since={order.inLaundrySince} label={labels.inLaundryFor} />
+          <ProcessingTimer since={order.inLaundrySince} label={t('inLaundryFor')} />
         </div>
       )}
 
       <div className="flex items-center gap-4 border-t border-border/50 px-4 py-3">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShoppingBag className="size-3.5" strokeWidth={1.75} />
-          <span className="font-medium">{labels.items.replace('{{count}}', String(order.itemCount))}</span>
+          <span className="font-medium">{t('orderItems').replace('{{count}}', String(order.itemCount))}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Package className="size-3.5" strokeWidth={1.75} />
-          <span className="font-medium">{labels.bags.replace('{{count}}', String(bagCount))}</span>
+          <span className="font-medium">{t('orderBags').replace('{{count}}', String(bagCount))}</span>
         </div>
         <div className="ms-auto flex items-center gap-4">
-          <TimeDisplay time={order.pickupTime} label={labels.pickupTime} />
-          <TimeDisplay time={order.deliverBy} label={labels.deliverBy} isDeadline />
+          <TimeDisplay date={order.pickupDate} time={order.pickupTime} label={t('pickupTime')} />
+          <TimeDisplay
+            date={order.deliverByDate}
+            time={order.deliverBy}
+            label={t('deliverBy')}
+            isDeadline
+          />
         </div>
       </div>
 
@@ -205,7 +171,7 @@ export const OrderCard = ({
             onClick={() => setBagsExpanded(!bagsExpanded)}
           >
             <span>
-              {bagsLabel} — {labels.bagsExpanded.replace('{{count}}', String(displayBags.length))}
+              {bagsLabel} — {t('bagsExpanded').replace('{{count}}', String(displayBags.length))}
             </span>
             <motion.span animate={{ rotate: bagsExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="size-3.5" />
@@ -227,10 +193,19 @@ export const OrderCard = ({
                       key={bag.id}
                       className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/20 px-3 py-2"
                     >
-                      <span className="font-mono text-xs font-medium text-foreground/90">{bag.bagId}</span>
+                      <div className="min-w-0">
+                        <span className="font-mono text-xs font-medium text-foreground/90">
+                          {bag.bagId}
+                        </span>
+                        {bag.quantity > 0 && (
+                          <p className="mt-0.5 text-[10px] text-muted-foreground">
+                            {t('bagItemCount').replace('{{count}}', String(bag.quantity))}
+                          </p>
+                        )}
+                      </div>
                       <BagStatusBadge
                         status={bag.status}
-                        label={getBagStatusLabel(bag.status, labels)}
+                        label={getBagStatusLabel(bag.status, t)}
                       />
                     </div>
                   ))}
@@ -245,14 +220,14 @@ export const OrderCard = ({
         {isIncoming && onScanVerify && (
           <Button variant="outline" size="xs" className="gap-1.5" onClick={() => onScanVerify(order)}>
             <ScanLine className="size-3" />
-            {labels.scanVerify}
+            {t('scanVerify')}
           </Button>
         )}
 
         {isInLaundry && onAssignBags && (
           <Button variant="outline" size="xs" className="gap-1.5" onClick={() => onAssignBags(order)}>
             <Package className="size-3" />
-            {labels.assignBags}
+            {t('assignBags')}
           </Button>
         )}
 
@@ -267,7 +242,7 @@ export const OrderCard = ({
                 size="icon-xs"
                 className="size-6 shrink-0"
                 onClick={() => onAssignDriver(order)}
-                aria-label={labels.assignDriver}
+                aria-label={t('assignDriver')}
               >
                 <Pencil className="size-3" />
               </Button>
@@ -275,7 +250,7 @@ export const OrderCard = ({
           ) : (
             <Button variant="outline" size="xs" className="gap-1.5" onClick={() => onAssignDriver(order)}>
               <Truck className="size-3" />
-              {labels.assignDriver}
+              {t('assignDriver')}
             </Button>
           )
         )}

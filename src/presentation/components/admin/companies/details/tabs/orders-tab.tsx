@@ -21,6 +21,7 @@ interface OrdersTabProps {
   branches: CompanyDetailsBranch[]
   branchFilter: string
   search: string
+  isLoading?: boolean
   onBranchFilterChange: (slug: string) => void
   onSearchChange: (value: string) => void
   onOrderClick: (orderId: string) => void
@@ -35,6 +36,7 @@ export const OrdersTab = ({
   branches,
   branchFilter,
   search,
+  isLoading = false,
   onBranchFilterChange,
   onSearchChange,
   onOrderClick,
@@ -125,7 +127,12 @@ export const OrdersTab = ({
         ) : undefined
       }
     >
-      {filteredOrders.length === 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <Package className="size-10 animate-pulse text-muted-foreground/40" strokeWidth={1.5} />
+          <p className="mt-3 text-sm text-muted-foreground">{t('detailsLoadingOrders')}</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
           <Package className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
           <p className="mt-3 text-sm text-muted-foreground">{t('detailsNoOrders')}</p>

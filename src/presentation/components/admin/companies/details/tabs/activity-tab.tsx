@@ -10,6 +10,11 @@ import {
   UserCheck,
   PackageCheck,
   History,
+  CheckCircle2,
+  XCircle,
+  WashingMachine,
+  AlertTriangle,
+  UserPlus,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -19,12 +24,31 @@ import { cn, PAGE_EASE } from '@/presentation/utils'
 
 interface ActivityTabProps {
   activities: CompanyActivity[]
+  isLoading?: boolean
 }
 
 export const activityConfig: Record<
   CompanyActivityType,
   { icon: LucideIcon; color: string; bgColor: string; labelKey: string }
 > = {
+  company_registered: {
+    icon: UserPlus,
+    color: 'text-sky-600 dark:text-sky-400',
+    bgColor: 'bg-sky-50 dark:bg-sky-950/40',
+    labelKey: 'detailsCompanyRegistered',
+  },
+  company_approved: {
+    icon: CheckCircle2,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-950/40',
+    labelKey: 'detailsCompanyApproved',
+  },
+  branch_created: {
+    icon: Building2,
+    color: 'text-sky-600 dark:text-sky-400',
+    bgColor: 'bg-sky-50 dark:bg-sky-950/40',
+    labelKey: 'detailsBranchCreated',
+  },
   order_created: {
     icon: Package,
     color: 'text-blue-600 dark:text-blue-400',
@@ -36,6 +60,24 @@ export const activityConfig: Record<
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-950/40',
     labelKey: 'detailsOrderDelivered',
+  },
+  order_in_laundry: {
+    icon: WashingMachine,
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-950/40',
+    labelKey: 'detailsOrderInLaundry',
+  },
+  order_ready: {
+    icon: PackageCheck,
+    color: 'text-teal-600 dark:text-teal-400',
+    bgColor: 'bg-teal-50 dark:bg-teal-950/40',
+    labelKey: 'detailsOrderReady',
+  },
+  order_cancelled: {
+    icon: XCircle,
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-50 dark:bg-red-950/40',
+    labelKey: 'detailsOrderCancelled',
   },
   invoice_generated: {
     icon: FileText,
@@ -54,6 +96,12 @@ export const activityConfig: Record<
     color: 'text-sky-600 dark:text-sky-400',
     bgColor: 'bg-sky-50 dark:bg-sky-950/40',
     labelKey: 'detailsBranchAdded',
+  },
+  incident_reported: {
+    icon: AlertTriangle,
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-50 dark:bg-amber-950/40',
+    labelKey: 'detailsIncidentReported',
   },
   status_changed: {
     icon: RefreshCw,
@@ -108,7 +156,7 @@ export const ActivityTimelineItem = ({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs font-medium text-foreground">
-              {t(config.labelKey)}
+              {activity.title || t(config.labelKey)}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">{activity.description}</p>
           </div>
@@ -122,8 +170,22 @@ export const ActivityTimelineItem = ({
   )
 }
 
-export const ActivityTab = ({ activities }: ActivityTabProps) => {
+export const ActivityTab = ({ activities, isLoading = false }: ActivityTabProps) => {
   const { t } = useTranslation('companies')
+
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: PAGE_EASE }}
+        className="flex flex-col items-center justify-center rounded-xl border border-border/70 py-16"
+      >
+        <History className="size-10 animate-pulse text-muted-foreground/40" strokeWidth={1.5} />
+        <p className="mt-3 text-sm text-muted-foreground">{t('detailsLoadingActivity')}</p>
+      </motion.div>
+    )
+  }
 
   if (activities.length === 0) {
     return (

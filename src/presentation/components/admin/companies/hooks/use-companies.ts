@@ -11,15 +11,19 @@ const SEARCH_DEBOUNCE_MS = 400
 
 interface UseCompaniesOptions {
   initialPageSize?: number
+  initialKeyword?: string
 }
 
-export const useCompanies = ({ initialPageSize = 5 }: UseCompaniesOptions = {}) => {
+export const useCompanies = ({
+  initialPageSize = 5,
+  initialKeyword = '',
+}: UseCompaniesOptions = {}) => {
   const now = useMemo(() => new Date(), [])
   const trendYear = now.getFullYear()
   const trendMonth = now.getMonth() + 1
 
-  const [keyword, setKeyword] = useState('')
-  const [debouncedKeyword, setDebouncedKeyword] = useState('')
+  const [keyword, setKeyword] = useState(initialKeyword)
+  const [debouncedKeyword, setDebouncedKeyword] = useState(initialKeyword.trim())
   const [statusFilter, setStatusFilter] = useState<CompanyAccountStatus | 'all'>('all')
   const [activeFilter, setActiveFilter] = useState<CompanyActiveFilterValue>('all')
   const [paginationState, setPaginationState] = useState<PaginationState>({
@@ -32,6 +36,10 @@ export const useCompanies = ({ initialPageSize = 5 }: UseCompaniesOptions = {}) 
   const [totalRows, setTotalRows] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setKeyword(initialKeyword)
+  }, [initialKeyword])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

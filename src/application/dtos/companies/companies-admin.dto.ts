@@ -1,4 +1,5 @@
 import type { CompanyAccountStatus } from '@/domain/enums'
+import type { FileReferenceDto } from '@/application/dtos/file-upload/file-upload.dto'
 
 export interface CompanyBranchDto {
   id: string
@@ -13,12 +14,12 @@ export interface CompanyAdminItemDto {
   name: string
   email: string
   type: string
-  photo: string | null
+  photo: string | FileReferenceDto | null
   mainResponsiblePerson: string
   phone: string
   status: number
   createdAt: string
-  commercialRegistration: string
+  commercialRegistration: string | FileReferenceDto | null
   branchesCount: number
   branches: CompanyBranchDto[]
   activeOrders: number
@@ -26,6 +27,22 @@ export interface CompanyAdminItemDto {
   pendingInvoices: number
   outstanding: number
   isActive: boolean
+}
+
+export interface CompanyForEditDto {
+  id: string
+  slug: string
+  businessName: string
+  mainContactPerson: string
+  phone: string
+  photo: string | FileReferenceDto | null
+  email: string
+  type: string
+  address: string
+  googleMapLink: string
+  commercialRegistration: string | FileReferenceDto | null
+  parentCompanyId: string | null
+  isActive?: boolean
 }
 
 export interface CompanySparklinePointDto {
@@ -64,4 +81,3 @@ export interface CompanyRejectRequestDto {
   companyIds: string[]
   reason: string
 }
-

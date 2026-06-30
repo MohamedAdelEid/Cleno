@@ -1,7 +1,5 @@
 import type {
   CompanyDropdownItemDto,
-  IncidentDetailDto,
-  IncidentReplyCreateRequestDto,
   LaundryBoardDataDto,
   LaundryBoardParams,
   LaundryBoardStatsDto,
@@ -11,14 +9,12 @@ import type {
   OrderBagCreateRequestDto,
   OrderBagUpdateRequestDto,
   OrderBagsDataDto,
-  OrderIncidentsDataDto,
   OrderNoteCreateRequestDto,
   OrderNotesDataDto,
 } from '@/application/dtos/laundry/laundry-ops.dto'
 import { laundryAdapter } from '@/application/adapters/laundry.adapter'
 import type {
   ItemBagAssignment,
-  LaundryIncident,
   LaundryOrder,
   LaundryOrderNote,
   LaundryStats,
@@ -132,6 +128,14 @@ export const laundryApi = {
     })
   },
 
+  updateNote(slug: string, content: string): Promise<ApiResult<boolean>> {
+    const payload: OrderNoteCreateRequestDto = { content }
+    return httpClient.put<boolean>({
+      url: API_ENDPOINTS.laundry.notes(slug),
+      data: payload,
+    })
+  },
+
   getBags(slug: string): Promise<ApiResult<OrderBagsDataDto>> {
     return httpClient.get<OrderBagsDataDto>({
       url: API_ENDPOINTS.laundry.bags(slug),
@@ -162,61 +166,6 @@ export const laundryApi = {
   deleteBagAssignment(slug: string, assignmentId: string): Promise<ApiResult<boolean>> {
     return httpClient.delete<boolean>({
       url: API_ENDPOINTS.laundry.bagById(slug, assignmentId),
-    })
-  },
-
-  async getOrderIncidents(slug: string): Promise<
-    ApiResult<{
-      orderNumber: string
-      companyName: string
-      incidents: LaundryIncident[]
-    }>
-  > {
-    const result = await httpClient.get<OrderIncidentsDataDto>({
-      url: API_ENDPOINTS.laundry.incidents(slug),
-    })
-
-    if (!result.hasValue || !result.data) {
-      return { ...result, data: null }
-    }
-
-    try {
-      return {
-        ...result,
-        data: {
-          orderNumber: result.data.orderNumber,
-          companyName: result.data.companyName,
-          incidents: (result.data.incidents ?? []).map((item) =>
-            laundryAdapter.toIncidentListItem(item),
-          ),
-        },
-      }
-    } catch {
-      return parseAdapterError('Unable to parse order incidents.')
-    }
-  },
-
-  async getIncidentDetail(slug: string): Promise<ApiResult<LaundryIncident>> {
-    const result = await httpClient.get<IncidentDetailDto>({
-      url: API_ENDPOINTS.incidents.bySlug(slug),
-    })
-
-    if (!result.hasValue || !result.data) {
-      return { ...result, data: null }
-    }
-
-    try {
-      return { ...result, data: laundryAdapter.toIncidentDetail(result.data) }
-    } catch {
-      return parseAdapterError('Unable to parse incident detail.')
-    }
-  },
-
-  addIncidentReply(slug: string, message: string): Promise<ApiResult<boolean>> {
-    const payload: IncidentReplyCreateRequestDto = { message }
-    return httpClient.post<boolean>({
-      url: API_ENDPOINTS.incidents.replies(slug),
-      data: payload,
     })
   },
 }

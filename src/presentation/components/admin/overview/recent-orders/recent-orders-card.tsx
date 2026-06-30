@@ -1,23 +1,33 @@
 import { ClipboardList } from 'lucide-react'
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 
+import type { RecentOrder } from '@/domain/entities'
 import { ROUTES } from '@/presentation/routes/routes.constants'
 import { DataTable } from '@/presentation/components/dashboard/data-table'
 import { useDirection } from '@/presentation/hooks/use-direction'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn } from '@/presentation/utils'
 import { DashboardPanelCard, PanelCardActionLink } from '@/presentation/components/dashboard/widgets/panel-card'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { createRecentOrdersColumns } from './recent-orders-columns'
-import { recentOrdersDummyData } from './recent-orders.data'
 
 interface RecentOrdersCardProps {
   index?: number
   className?: string
+  orders: RecentOrder[]
+  isLoading?: boolean
 }
 
-export const RecentOrdersCard = ({ index = 10, className }: RecentOrdersCardProps) => {
+export const RecentOrdersCard = ({
+  index = 10,
+  className,
+  orders,
+  isLoading = false,
+}: RecentOrdersCardProps) => {
   const { t } = useTranslation('dashboard')
   const { isRtl } = useDirection()
+  const navigate = useNavigate()
 
   const columns = useMemo(
     () =>
@@ -45,15 +55,23 @@ export const RecentOrdersCard = ({ index = 10, className }: RecentOrdersCardProp
         },
         {
           isRtl,
-          onOrderClick: (order) => console.info('View order:', order.id),
-          onCustomerClick: (order) => console.info('View customer:', order.customerId),
-          onBranchClick: (order) => console.info('View branch:', order.branchId),
-          onBagsClick: (order) => console.info('View bags:', order.bags),
-          onAssignDriverClick: (order) => console.info('Assign driver:', order.id),
-          onDriverClick: (order) => console.info('View driver:', order.driver?.id),
+          onOrderClick: (order) => navigate(ROUTES.ORDERS.withSearch(order.orderNumber)),
+          onCustomerClick: (order) => {
+            if (order.customerId) {
+              navigate(ROUTES.COMPANIES.details(order.customerId))
+            }
+          },
+          onBranchClick: () => navigate(ROUTES.BRANCHES.INDEX),
+          onBagsClick: () => navigate(ROUTES.OPERATIONAL_BAGS.INDEX),
+          onAssignDriverClick: (order) => navigate(ROUTES.ORDERS.withSearch(order.orderNumber)),
+          onDriverClick: (order) => {
+            if (order.driver?.fullName) {
+              navigate(ROUTES.DRIVERS.withSearch(order.driver.fullName))
+            }
+          },
         },
       ),
-    [isRtl, t],
+    [isRtl, navigate, t],
   )
 
   return (
@@ -70,12 +88,20 @@ export const RecentOrdersCard = ({ index = 10, className }: RecentOrdersCardProp
         />
       }
     >
-      <DataTable
-        columns={columns}
-        data={recentOrdersDummyData}
-        emptyMessage={t('recentOrdersEmpty')}
-        className={cn('py-1')}
-      />
+      {isLoading ? (
+        <div className="space-y-3 px-4 py-3">
+          {Array.from({ length: 5 }, (_, index) => (
+            <Skeleton key={index} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={orders}
+          emptyMessage={t('recentOrdersEmpty')}
+          className={cn('py-1')}
+        />
+      )}
     </DashboardPanelCard>
   )
 }

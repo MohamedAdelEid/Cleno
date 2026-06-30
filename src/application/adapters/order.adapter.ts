@@ -1,8 +1,8 @@
+import type { DriverDropdownItemDto } from '@/application/dtos/drivers/drivers-admin.dto'
 import type {
   OrderAdminListItemDto,
   OrderTrackingDataDto,
   OrdersDashboardDataDto,
-  DriverDropdownItemDto,
 } from '@/application/dtos/orders/orders-admin.dto'
 import { parseOrderStatus } from '@/domain/enums/order-status.enum'
 import type { ManagedOrder, OrderDriver } from '@/domain/entities'

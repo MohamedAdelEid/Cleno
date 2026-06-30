@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/presentation/components/ui/dialog'
+import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn } from '@/presentation/utils'
 
 interface AssignDriverModalProps {
@@ -21,12 +22,6 @@ interface AssignDriverModalProps {
   drivers: LaundryDriver[]
   onAssign: (orderId: string, driverId: string) => void
   onAutoAssign?: (orderId: string) => void
-  labels: {
-    assignDriver: string
-    reassignDriver: string
-    autoAssign: string
-    searchPlaceholder: string
-  }
 }
 
 export const AssignDriverModal = ({
@@ -36,8 +31,8 @@ export const AssignDriverModal = ({
   drivers,
   onAssign,
   onAutoAssign,
-  labels,
 }: AssignDriverModalProps) => {
+  const { t } = useTranslation('laundry')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -63,7 +58,7 @@ export const AssignDriverModal = ({
     onOpenChange(false)
   }
 
-  const title = order?.driver ? labels.reassignDriver : labels.assignDriver
+  const title = order?.driver ? t('reassignDriver') : t('assignDriver')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,7 +77,7 @@ export const AssignDriverModal = ({
           <SearchInput
             value={search}
             onValueChange={setSearch}
-            placeholder={labels.searchPlaceholder}
+            placeholder={t('searchDriverPlaceholder')}
           />
 
           <div className="max-h-64 space-y-1.5 overflow-y-auto">
@@ -125,7 +120,7 @@ export const AssignDriverModal = ({
           {onAutoAssign && (
             <Button variant="outline" className="gap-2 flex-1" onClick={handleAutoAssign}>
               <Wand2 className="size-3.5" strokeWidth={2} />
-              {labels.autoAssign}
+              {t('autoAssign')}
             </Button>
           )}
           <Button className="flex-1" onClick={handleAssign} disabled={!selectedId}>

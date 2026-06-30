@@ -2,9 +2,8 @@ import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { companyAdapter } from '@/application/adapters/company.adapter'
-import type { ManagedCompany } from '@/domain/entities'
 import type { CompanyFormValues } from '@/domain/schemas'
-import type { ApiResult } from '@/domain/types'
+import type { ApiResult, CompanyEditDetails } from '@/domain/types'
 import { companiesApi } from '@/infrastructure/api/companies.api'
 import { fileUploadApi } from '@/infrastructure/api/file-upload.api'
 import { draftStorage } from '@/infrastructure/storage/draft.storage'
@@ -13,15 +12,9 @@ import type { CompanyFormSubmitPayload } from '@/presentation/components/admin/c
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { ROUTES } from '@/presentation/routes/routes.constants'
 
-const getDraftKey = (
-  mode: 'create' | 'edit',
-  companyId?: string,
-  parentCompanyId?: string,
-) => {
+const getDraftKey = (mode: 'create' | 'edit', companyId?: string, parentCompanyId?: string) => {
   if (mode === 'create') {
-    return parentCompanyId
-      ? `companies.create.branch.${parentCompanyId}`
-      : 'companies.create'
+    return parentCompanyId ? `companies.create.branch.${parentCompanyId}` : 'companies.create'
   }
 
   return `companies.edit.${companyId ?? 'unknown'}`
@@ -74,6 +67,7 @@ export const useCompanyFormActions = (
   const handleSubmit = async ({
     values,
     uploadedFiles,
+    existingFilePaths,
   }: CompanyFormSubmitPayload): Promise<boolean> => {
     if (mode === 'create') {
       const result = await companiesApi.create(
@@ -103,7 +97,20 @@ export const useCompanyFormActions = (
       return true
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    if (!companyId) return false
+
+    const result = await companiesApi.update(
+      companyId,
+      companyAdapter.toUpdateRequest(values, uploadedFiles, existingFilePaths),
+    )
+
+    if (!result.hasValue) {
+      notify.error({
+        title: t('toastCompanyUpdateFailed'),
+        description: getErrorDescription(result, t('toastCompanyUpdateFailedDesc')),
+      })
+      return false
+    }
 
     notify.success({
       title: t('toastCompanyUpdated'),
@@ -118,15 +125,17 @@ export const useCompanyFormActions = (
   return { handleDiscard, handleSubmit, draftKey, isBranchCreate }
 }
 
-export const mapCompanyToFormValues = (company: ManagedCompany): Partial<CompanyFormValues> => ({
-  businessName: company.name,
+export const mapCompanyToFormValues = (
+  company: CompanyEditDetails,
+): Partial<CompanyFormValues> => ({
+  businessName: company.businessName,
   businessType: company.type,
-  mainContactPerson: company.responsible.fullName,
+  mainContactPerson: company.mainContactPerson,
   phone: company.phone,
   email: company.email,
   password: '',
-  address: '',
-  googleMapLink: '',
+  address: company.address,
+  googleMapLink: company.googleMapLink,
   logo: [],
   commercialRegistration: [],
   isActive: company.isActive,

@@ -33,8 +33,11 @@ export interface LaundryBoardItemDto {
   durationInLaundryMinutes: number | null
   totalItems: number
   bagCount: number
+  pickupDate: string | null
   pickupTime: string
+  deliverByDate: string | null
   deliverByTime: string
+  note: LaundryBoardNoteDto | null
   hasOpenIncidents: boolean
   assignedDriverName: string | null
   items: LaundryBoardItemLineDto[]
@@ -55,6 +58,23 @@ export interface LaundryBoardBagDto {
   bagNumber: string
   stage: number
   bagStatus: number
+  quantity: number
+}
+
+export interface LaundryBoardNoteUserDto {
+  id: string
+  fullName: string
+  email: string
+  photo: { path: string; url: string } | null
+}
+
+export interface LaundryBoardNoteDto {
+  id: string
+  content: string
+  createdAt: string
+  updatedAt: string | null
+  authorName: string
+  lastModifiedBy: LaundryBoardNoteUserDto | null
 }
 
 export interface LaundryBoardDataDto {
@@ -93,7 +113,9 @@ export interface OrderNoteDto {
   id: string
   content: string
   createdAt: string
+  updatedAt: string | null
   authorName: string
+  lastModifiedBy: LaundryBoardNoteUserDto | null
 }
 
 export interface OrderNotesDataDto {
@@ -185,4 +207,11 @@ export interface IncidentDetailDto {
 
 export interface IncidentReplyCreateRequestDto {
   message: string
+}
+
+export interface IncidentCreateRequestDto {
+  type: number
+  stage?: number
+  title?: string
+  description: string
 }

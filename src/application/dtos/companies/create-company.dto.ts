@@ -8,6 +8,10 @@ export interface CompanyCreateRequestDto {
   type: string
   address: string
   googleMapLink: string
-  commercialRegistration: string
+  commercialRegistration: string | null
   parentCompanyId?: string
+}
+
+export type CompanyUpdateRequestDto = Omit<CompanyCreateRequestDto, 'password'> & {
+  password?: string
 }

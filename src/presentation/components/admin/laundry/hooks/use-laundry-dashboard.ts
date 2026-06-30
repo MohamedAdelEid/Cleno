@@ -11,12 +11,14 @@ import type {
 import { LaundryWorkflowStage } from '@/domain/enums'
 import type { OrderDriver } from '@/domain/entities'
 import { companiesDropdownApi, laundryApi } from '@/infrastructure/api/laundry.api'
+import { bagsApi } from '@/infrastructure/api/bags.api'
 import { driversApi, ordersApi } from '@/infrastructure/api/orders.api'
 import { notify } from '@/infrastructure/libs/toast/toast'
 import type { SearchableSelectOption } from '@/presentation/components/ui/searchable-select'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 
 import type { LaundrySortMode, LaundryViewMode } from '../filters/laundry-filters-section'
+import { getScheduleTimestamp } from '../cards/time-display'
 import { useKeyboardShortcuts } from './use-keyboard-shortcuts'
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -63,6 +65,7 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
   const [itemAssignOrder, setItemAssignOrder] = useState<LaundryOrder | null>(null)
   const [bagModalOrder, setBagModalOrder] = useState<LaundryOrder | null>(null)
   const [bagModalData, setBagModalData] = useState<OrderBagsDataDto | null>(null)
+  const [dropdownBags, setDropdownBags] = useState<{ id: string; bagId: string }[]>([])
 
   const [isStatsLoading, setIsStatsLoading] = useState(true)
   const [isOrdersLoading, setIsOrdersLoading] = useState(true)
@@ -173,22 +176,34 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
     if (!itemAssignOrder) {
       setBagModalOrder(null)
       setBagModalData(null)
+      setDropdownBags([])
       return
     }
 
     let cancelled = false
 
-    const loadBags = async () => {
+    const loadBagModalData = async () => {
       setIsBagModalLoading(true)
 
       try {
-        const result = await laundryApi.getBags(itemAssignOrder.slug)
+        const [bagsResult, dropdownResult] = await Promise.all([
+          laundryApi.getBags(itemAssignOrder.slug),
+          bagsApi.getDropdown(),
+        ])
 
         if (cancelled) return
 
-        if (result.hasValue && result.data) {
-          setBagModalData(result.data)
-          setBagModalOrder(laundryAdapter.toBagModalOrder(itemAssignOrder, result.data))
+        if (dropdownResult.hasValue && dropdownResult.data) {
+          setDropdownBags(
+            dropdownResult.data.map((bag) => ({ id: bag.id, bagId: bag.number })),
+          )
+        } else {
+          setDropdownBags([])
+        }
+
+        if (bagsResult.hasValue && bagsResult.data) {
+          setBagModalData(bagsResult.data)
+          setBagModalOrder(laundryAdapter.toBagModalOrder(itemAssignOrder, bagsResult.data))
         } else {
           setBagModalData(null)
           setBagModalOrder(itemAssignOrder)
@@ -197,13 +212,14 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
         if (!cancelled) {
           setBagModalData(null)
           setBagModalOrder(itemAssignOrder)
+          setDropdownBags([])
         }
       } finally {
         if (!cancelled) setIsBagModalLoading(false)
       }
     }
 
-    void loadBags()
+    void loadBagModalData()
 
     return () => {
       cancelled = true
@@ -212,8 +228,8 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
 
   const filteredOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
-      const dateA = new Date(a.pickupTime).getTime()
-      const dateB = new Date(b.pickupTime).getTime()
+      const dateA = getScheduleTimestamp(a.pickupDate, a.pickupTime)
+      const dateB = getScheduleTimestamp(b.pickupDate, b.pickupTime)
 
       if (Number.isNaN(dateA) || Number.isNaN(dateB)) return 0
       return sortMode === 'newest' ? dateB - dateA : dateA - dateB
@@ -222,6 +238,10 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
 
   const processingBagPool = useMemo(() => {
     const bags = new Map<string, { id: string; bagId: string }>()
+
+    dropdownBags.forEach((bag) => {
+      bags.set(bag.bagId, bag)
+    })
 
     bagModalData?.assignments.forEach((assignment) => {
       bags.set(assignment.bagNumber, { id: assignment.bagId, bagId: assignment.bagNumber })
@@ -232,7 +252,7 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
     })
 
     return Array.from(bags.values())
-  }, [bagModalData, bagModalOrder])
+  }, [bagModalData, bagModalOrder, dropdownBags])
 
   const findOrderBySlug = useCallback(
     (slug: string) => orders.find((order) => order.slug === slug),
@@ -488,14 +508,16 @@ export const useLaundryDashboard = ({ refreshKey = 0 }: UseLaundryDashboardOptio
       setIsMutating(true)
 
       try {
-        const result = await laundryApi.addNote(order.slug, content)
+        const result = order.note
+          ? await laundryApi.updateNote(order.slug, content)
+          : await laundryApi.addNote(order.slug, content)
 
         if (!result.hasValue) {
           notify.error({ title: result.error?.message ?? t('toastNoteFailed') })
           return
         }
 
-        notify.success({ title: t('toastNoteAdded') })
+        notify.success({ title: order.note ? t('toastNoteUpdated') : t('toastNoteAdded') })
         await refreshAll()
       } finally {
         setIsMutating(false)

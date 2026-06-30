@@ -10,6 +10,11 @@ export interface FileUploadResponseDto {
   message: string
 }
 
+export interface FileReferenceDto {
+  path: string | null
+  url: string | null
+}
+
 export interface FileDeleteResponseDto {
   success: boolean
   message: string

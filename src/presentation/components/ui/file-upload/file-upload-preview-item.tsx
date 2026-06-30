@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Check, FileText, X } from 'lucide-react'
+import { Check, Download, FileText, X } from 'lucide-react'
 
 import { Button } from '@/presentation/components/ui/button'
 import { cn } from '@/presentation/utils'
@@ -8,7 +8,9 @@ import type { FilePreviewItem } from './types'
 interface FileUploadPreviewItemProps {
   item: FilePreviewItem
   removeLabel: string
+  downloadLabel?: string
   onRemove: () => void
+  onDownload?: () => void
   disabled?: boolean
   progress?: number
   isUploading?: boolean
@@ -26,7 +28,9 @@ const formatFileSize = (bytes: number) => {
 export const FileUploadPreviewItem = ({
   item,
   removeLabel,
+  downloadLabel = 'Download file',
   onRemove,
+  onDownload,
   disabled,
   progress = 0,
   isUploading = false,
@@ -96,26 +100,39 @@ export const FileUploadPreviewItem = ({
             ) : null}
           </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="shrink-0 text-muted-foreground hover:text-destructive"
-            onClick={onRemove}
-            disabled={disabled || isUploading}
-            aria-label={removeLabel}
-          >
-            <X className="size-4" />
-          </Button>
+          <div className="flex shrink-0 items-center gap-1">
+            {onDownload ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={onDownload}
+                disabled={disabled || isUploading}
+                aria-label={downloadLabel}
+              >
+                <Download className="size-4" />
+              </Button>
+            ) : null}
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={onRemove}
+              disabled={disabled || isUploading}
+              aria-label={removeLabel}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
         </div>
 
         {isUploading || isComplete ? (
           <div className="h-1.5 overflow-hidden rounded-full bg-muted/60">
             <motion.div
-              className={cn(
-                'h-full rounded-full',
-                isComplete ? 'bg-emerald-500' : 'bg-primary',
-              )}
+              className={cn('h-full rounded-full', isComplete ? 'bg-emerald-500' : 'bg-primary')}
               initial={{ width: 0 }}
               animate={{ width: `${Math.max(progress, isComplete ? 100 : 0)}%` }}
               transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}

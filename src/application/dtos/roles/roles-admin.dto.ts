@@ -1,13 +1,18 @@
+import type { FileReferenceDto } from '@/application/dtos/file-upload/file-upload.dto'
+import type { PermissionModuleDto } from '@/application/dtos/permissions/permissions.dto'
+
 export interface RoleUserDto {
   id: string
   fullName: string
   email: string
   initials: string
+  photo?: string | FileReferenceDto | null
   isActive: boolean
 }
 
 export interface RoleAdminItemDto {
   id: string
+  slug?: string
   name: string
   description: string | null
   permissionsCount: number
@@ -56,4 +61,11 @@ export interface RoleAvailableUsersParams {
   pageSize?: number
   sortBy?: string
   sortDirection?: 'asc' | 'desc'
+}
+
+export interface RolePermissionsDto {
+  roleId: string
+  roleSlug: string
+  roleName: string
+  permissionGroups: PermissionModuleDto[]
 }

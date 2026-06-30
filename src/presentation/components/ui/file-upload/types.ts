@@ -6,6 +6,7 @@ export interface FileUploadLabels {
   browse: string
   replace: string
   remove: string
+  download?: string
   existingFile: string
   invalidType: string
   maxSize: string
@@ -24,6 +25,7 @@ export interface FileUploadProps {
   disabled?: boolean
   labels: FileUploadLabels
   existingPreviewUrl?: string | null
+  existingFileName?: string | null
   existingFilePath?: string | null
   onExistingPreviewRemove?: () => void
   autoUpload?: boolean
@@ -45,5 +47,6 @@ export interface FilePreviewItem {
   name: string
   size: number
   isImage: boolean
+  filePath?: string | null
   isRemote?: boolean
 }

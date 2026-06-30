@@ -21,6 +21,16 @@ export const findBreadcrumbRouteOverride = (pathname: string) => {
   return null
 }
 
+export const findCompanyDetailsBreadcrumbSlug = (pathname: string): string | null => {
+  if (matchPath({ path: ROUTES.COMPANIES.EDIT, end: true }, pathname)) return null
+  if (matchPath({ path: ROUTES.COMPANIES.NEW, end: true }, pathname)) return null
+
+  const match = matchPath({ path: ROUTES.COMPANIES.DETAILS, end: false }, pathname)
+  const slug = match?.params.companySlug
+
+  return typeof slug === 'string' && slug.length > 0 ? slug : null
+}
+
 const canAccessItem = (
   item: NavigationItem,
   hasAnyPermission: (permissions: Permission[]) => boolean,

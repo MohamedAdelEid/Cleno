@@ -10,6 +10,7 @@ const SEARCH_DEBOUNCE_MS = 400
 
 interface UseOrdersOptions {
   initialPageSize?: number
+  initialKeyword?: string
 }
 
 const pickDefaultActiveSlug = (orders: ManagedOrder[]): string | null => {
@@ -17,9 +18,9 @@ const pickDefaultActiveSlug = (orders: ManagedOrder[]): string | null => {
   return inProgress?.slug ?? orders[0]?.slug ?? null
 }
 
-export const useOrders = ({ initialPageSize = 5 }: UseOrdersOptions = {}) => {
-  const [keyword, setKeyword] = useState('')
-  const [debouncedKeyword, setDebouncedKeyword] = useState('')
+export const useOrders = ({ initialPageSize = 5, initialKeyword = '' }: UseOrdersOptions = {}) => {
+  const [keyword, setKeyword] = useState(initialKeyword)
+  const [debouncedKeyword, setDebouncedKeyword] = useState(initialKeyword.trim())
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all')
   const [analysisInterval, setAnalysisInterval] = useState<OrderAnalysisInterval>(
     OrderAnalysisInterval.Monthly,
@@ -44,6 +45,10 @@ export const useOrders = ({ initialPageSize = 5 }: UseOrdersOptions = {}) => {
   const [isMutating, setIsMutating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState(() => new Date())
+
+  useEffect(() => {
+    setKeyword(initialKeyword)
+  }, [initialKeyword])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedKeyword(keyword.trim()), SEARCH_DEBOUNCE_MS)

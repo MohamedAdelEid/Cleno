@@ -9,103 +9,188 @@ import {
   Users,
   Wallet,
 } from 'lucide-react'
+import { useMemo } from 'react'
+
+import { dashboardAdapter } from '@/application/adapters/dashboard.adapter'
+import type { AdminDashboardKpis } from '@/domain/types'
 import { ActiveDriversCard } from './active-drivers'
 import { AlertsCard } from './alerts'
 import { LatestUpdatesCard } from './latest-updates'
 import { OrderVolumeCard } from './order-volume'
-import { DashboardStatCard, type DashboardStatCardProps } from '@/presentation/components/dashboard/widgets/stat-card'
+import {
+  DashboardStatCard,
+  type DashboardStatCardProps,
+} from '@/presentation/components/dashboard/widgets/stat-card'
+import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useTranslation } from '@/presentation/hooks/use-translation'
-import { cn } from '@/presentation/utils'
+import { cn, fadeUp } from '@/presentation/utils'
+import { motion } from 'framer-motion'
+import type { ActiveDriver } from '@/domain/entities'
+import type { DashboardAlert } from '@/domain/entities'
+import { OrderVolumePeriod } from '@/domain/enums'
+import type { OrderVolumeSummary } from '@/domain/types'
+import type { ActivityItem } from './latest-updates/latest-updates.types'
+import type { UpdatesFilter } from './latest-updates/latest-updates.types'
 
-export const DashboardStats = () => {
+const KPI_SKELETON_COUNT = 9
+
+const OverviewSkeletonCard = ({ index }: { index: number }) => (
+  <motion.div
+    {...fadeUp(index * 0.06)}
+    className="overflow-hidden rounded-xl border border-border/80 bg-[#f6f6f6] dark:bg-[#1a1a1a]"
+  >
+    <div className="flex items-start justify-between gap-3 px-4 pt-3 pb-2">
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="size-4 rounded-md" />
+    </div>
+    <div className="mx-2 mb-2 rounded-lg border border-border/60 bg-background px-3.5 py-3">
+      <div className="flex items-end justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+        <Skeleton className="h-10 w-24 rounded-md" />
+      </div>
+    </div>
+  </motion.div>
+)
+
+interface DashboardStatsProps {
+  kpis: AdminDashboardKpis | null
+  isKpisLoading: boolean
+  orderVolume: OrderVolumeSummary | null
+  orderVolumePeriod: OrderVolumePeriod
+  onOrderVolumePeriodChange: (period: OrderVolumePeriod) => void
+  isOrderVolumeLoading: boolean
+  activeDrivers: ActiveDriver[]
+  isActiveDriversLoading: boolean
+  alerts: DashboardAlert[]
+  isAlertsLoading: boolean
+  activityItems: ActivityItem[]
+  activityTotalCount: number
+  activityFilter: UpdatesFilter
+  onActivityFilterChange: (filter: UpdatesFilter) => void
+  activityCustomDate: Date | undefined
+  onActivityCustomDateChange: (date: Date | undefined) => void
+  activitySearch: string
+  onActivitySearchChange: (search: string) => void
+  isActivityLoading: boolean
+}
+
+export const DashboardStats = ({
+  kpis,
+  isKpisLoading,
+  orderVolume,
+  orderVolumePeriod,
+  onOrderVolumePeriodChange,
+  isOrderVolumeLoading,
+  activeDrivers,
+  isActiveDriversLoading,
+  alerts,
+  isAlertsLoading,
+  activityItems,
+  activityTotalCount,
+  activityFilter,
+  onActivityFilterChange,
+  activityCustomDate,
+  onActivityCustomDateChange,
+  activitySearch,
+  onActivitySearchChange,
+  isActivityLoading,
+}: DashboardStatsProps) => {
   const { t } = useTranslation('dashboard')
 
-  const Stats: DashboardStatCardProps[] = [
-    {
-      title: t('statsActiveOrders'),
-      value: 128,
-      description: t('statsActiveOrdersDesc'),
-      trend: { value: '+12.4%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: ClipboardList,
-      sparklineData: [22, 28, 25, 34, 30, 38, 42, 48, 44, 52],
-      sparklineTrend: 'positive',
-    },
-    {
-      title: t('statsInLaundry'),
-      value: 43,
-      description: t('statsInLaundryDesc'),
-      trend: { value: '+3.8%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: Shirt,
-      sparklineData: [40, 36, 38, 35, 33, 37, 34, 39, 41, 43],
-      sparklineTrend: 'positive',
-    },
-    {
-      title: t('statsOutstanding'),
-      value: 6,
-      description: t('statsOutstandingDesc'),
-      highlight: t('statsOverdue', { count: 2 }),
-      trend: { value: '-4.2%', label: t('statsVsLastWeek'), direction: 'down' },
-      icon: Wallet,
-      sparklineData: [18, 16, 14, 15, 12, 13, 10, 9, 8, 6],
-      sparklineTrend: 'negative',
-    },
-    {
-      title: t('statsActiveCustomers'),
-      value: 284,
-      description: t('statsActiveCustomersDesc'),
-      trend: { value: '+5.2%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: Users,
-      sparklineData: [210, 225, 218, 240, 252, 248, 265, 272, 278, 284],
-      sparklineTrend: 'positive',
-    },
-    {
-      title: t('statsBagsCirculating'),
-      value: '1,420',
-      description: t('statsBagsCirculatingDesc'),
-      trend: { value: '+2.1%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: Package,
-      sparklineData: [1280, 1310, 1295, 1340, 1365, 1350, 1388, 1395, 1410, 1420],
-      sparklineTrend: 'positive',
-    },
-    {
-      title: t('statsReadyForPickup'),
-      value: 18,
-      description: t('statsReadyForPickupDesc'),
-      trend: { value: '+6.1%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: PackageCheck,
-      sparklineData: [10, 12, 11, 14, 13, 15, 16, 14, 17, 18],
-      sparklineTrend: 'positive',
-    },
-    {
-      title: t('statsOutForDelivery'),
-      value: 26,
-      description: t('statsOutForDeliveryDesc'),
-      trend: { value: '+4.3%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: Truck,
-      sparklineData: [18, 20, 19, 22, 21, 24, 23, 25, 24, 26],
-      sparklineTrend: 'positive',
-    },
-    {
-      title: t('statsDelayedOrders'),
-      value: 7,
-      description: t('statsDelayedOrdersDesc'),
-      highlight: t('statsDelayedCritical', { count: 2 }),
-      trend: { value: '+1.8%', label: t('statsVsLastWeek'), direction: 'up' },
-      icon: Clock,
-      sparklineData: [4, 5, 4, 6, 5, 7, 6, 8, 7, 7],
-      sparklineTrend: 'negative',
-    },
-    {
-      title: t('statsOpenIncidents'),
-      value: 3,
-      description: t('statsOpenIncidentsDesc'),
-      highlight: t('statsIncidentsEscalated', { count: 1 }),
-      trend: { value: '-25%', label: t('statsVsLastWeek'), direction: 'down' },
-      icon: AlertTriangle,
-      sparklineData: [8, 7, 6, 6, 5, 4, 4, 3, 3, 3],
-      sparklineTrend: 'negative',
-    },
-  ]
+  const stats = useMemo((): DashboardStatCardProps[] => {
+    if (!kpis) return []
+
+    const vsLastWeek = t('statsVsLastWeek')
+
+    const buildCard = (
+      title: string,
+      description: string,
+      icon: DashboardStatCardProps['icon'],
+      data: { count: number; deltaPercent: number; sparkline: number[] },
+      invertSparkline = false,
+      highlight?: string,
+    ): DashboardStatCardProps => ({
+      title,
+      value: data.count >= 1000 ? data.count.toLocaleString() : data.count,
+      description,
+      highlight,
+      trend: {
+        value: dashboardAdapter.formatDeltaPercent(data.deltaPercent),
+        label: vsLastWeek,
+        direction: dashboardAdapter.toTrendDirection(data.deltaPercent),
+      },
+      icon,
+      sparklineData: data.sparkline,
+      sparklineTrend: dashboardAdapter.toSparklineTrend(data.deltaPercent, invertSparkline),
+    })
+
+    return [
+      buildCard(
+        t('statsActiveOrders'),
+        t('statsActiveOrdersDesc'),
+        ClipboardList,
+        kpis.activeOrders,
+      ),
+      buildCard(t('statsInLaundry'), t('statsInLaundryDesc'), Shirt, kpis.inLaundry),
+      buildCard(
+        t('statsOutstanding'),
+        t('statsOutstandingDesc'),
+        Wallet,
+        kpis.outstanding,
+        true,
+        kpis.outstanding.overdueCount > 0
+          ? t('statsOverdue', { count: kpis.outstanding.overdueCount })
+          : undefined,
+      ),
+      buildCard(
+        t('statsActiveCustomers'),
+        t('statsActiveCustomersDesc'),
+        Users,
+        kpis.activeCustomers,
+      ),
+      buildCard(
+        t('statsBagsCirculating'),
+        t('statsBagsCirculatingDesc'),
+        Package,
+        kpis.bagsCirculating,
+      ),
+      buildCard(
+        t('statsReadyForPickup'),
+        t('statsReadyForPickupDesc'),
+        PackageCheck,
+        kpis.readyForPickup,
+      ),
+      buildCard(
+        t('statsOutForDelivery'),
+        t('statsOutForDeliveryDesc'),
+        Truck,
+        kpis.outForDelivery,
+      ),
+      buildCard(
+        t('statsDelayedOrders'),
+        t('statsDelayedOrdersDesc'),
+        Clock,
+        kpis.delayedOrders,
+        true,
+        kpis.delayedOrders.criticalCount > 0
+          ? t('statsDelayedCritical', { count: kpis.delayedOrders.criticalCount })
+          : undefined,
+      ),
+      buildCard(
+        t('statsOpenIncidents'),
+        t('statsOpenIncidentsDesc'),
+        AlertTriangle,
+        kpis.openIncidents,
+        true,
+        kpis.openIncidents.escalatedCount > 0
+          ? t('statsIncidentsEscalated', { count: kpis.openIncidents.escalatedCount })
+          : undefined,
+      ),
+    ]
+  }, [kpis, t])
 
   return (
     <div
@@ -124,14 +209,18 @@ export const DashboardStats = () => {
             'xl:grid-cols-3',
           )}
         >
-          {Stats.map((stat, index) => (
-            <DashboardStatCard
-              key={stat.title}
-              {...stat}
-              index={index}
-              className="min-w-0 self-start"
-            />
-          ))}
+          {isKpisLoading
+            ? Array.from({ length: KPI_SKELETON_COUNT }, (_, index) => (
+                <OverviewSkeletonCard key={index} index={index} />
+              ))
+            : stats.map((stat, index) => (
+                <DashboardStatCard
+                  key={stat.title}
+                  {...stat}
+                  index={index}
+                  className="min-w-0 self-start"
+                />
+              ))}
         </div>
 
         <div
@@ -143,8 +232,18 @@ export const DashboardStats = () => {
             '2xl:grid-cols-[minmax(0,1fr)_280px]',
           )}
         >
-          <OrderVolumeCard className="min-w-0" />
-          <ActiveDriversCard className="min-w-0 self-stretch" />
+          <OrderVolumeCard
+            className="min-w-0"
+            summary={orderVolume}
+            period={orderVolumePeriod}
+            onPeriodChange={onOrderVolumePeriodChange}
+            isLoading={isOrderVolumeLoading}
+          />
+          <ActiveDriversCard
+            className="min-w-0 self-stretch"
+            drivers={activeDrivers}
+            isLoading={isActiveDriversLoading}
+          />
         </div>
       </div>
 
@@ -158,8 +257,17 @@ export const DashboardStats = () => {
         <LatestUpdatesCard
           index={9}
           className="min-h-0 min-w-0 flex-1"
+          items={activityItems}
+          totalCount={activityTotalCount}
+          filter={activityFilter}
+          onFilterChange={onActivityFilterChange}
+          customDate={activityCustomDate}
+          onCustomDateChange={onActivityCustomDateChange}
+          searchQuery={activitySearch}
+          onSearchQueryChange={onActivitySearchChange}
+          isLoading={isActivityLoading}
         />
-        <AlertsCard className="min-w-0 shrink-0" />
+        <AlertsCard className="min-w-0 shrink-0" alerts={alerts} isLoading={isAlertsLoading} />
       </div>
     </div>
   )

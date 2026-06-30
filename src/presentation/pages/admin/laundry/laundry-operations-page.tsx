@@ -84,118 +84,6 @@ export const LaundryOperationsPage = () => {
     searchRef,
   } = useLaundryDashboard({ refreshKey })
 
-  const statsLabels = {
-    receivedToday: t('statReceivedToday'),
-    processedToday: t('statProcessedToday'),
-    dispatchedToday: t('statDispatchedToday'),
-    avgProcessingTime: t('statAvgProcessingTime'),
-    bagsInLaundry: t('statBagsInLaundry'),
-  }
-
-  const filterLabels = {
-    searchPlaceholder: t('searchPlaceholder'),
-    filterCustomer: t('filterCustomer'),
-    filterAllCustomers: t('filterAllCustomers'),
-    sortNewest: t('sortNewest'),
-    sortOldest: t('sortOldest'),
-    viewList: t('viewList'),
-    viewBoard: t('viewBoard'),
-  }
-
-  const listLabels = {
-    tabIncoming: t('tabIncoming'),
-    tabInLaundry: t('tabInLaundry'),
-    tabReady: t('tabReady'),
-    emptyIncoming: t('emptyIncoming'),
-    emptyInLaundry: t('emptyInLaundry'),
-    emptyReady: t('emptyReady'),
-    selectedLabel: t('selectedLabel'),
-    selectAll: t('selectAll'),
-    deselectAll: t('deselectAll'),
-    bulkMarkSelectedReceived: t('bulkMarkSelectedReceived'),
-    bulkMarkSelectedReady: t('bulkMarkSelectedReady'),
-    bulkDispatchSelected: t('bulkDispatchSelected'),
-  }
-
-  const cardLabels = {
-    items: t('orderItems'),
-    bags: t('orderBags'),
-    pickupTime: t('pickupTime'),
-    deliverBy: t('deliverBy'),
-    assignedBags: t('assignedBags'),
-    bagsExpanded: t('bagsExpanded'),
-    bagStatusOnTheWay: t('bagStatusOnTheWay'),
-    bagStatusProcessing: t('bagStatusProcessing'),
-    bagStatusReady: t('bagStatusReady'),
-    inLaundryFor: t('inLaundryFor'),
-    urgencyWarning: t('urgencyWarning'),
-    urgencyUrgent: t('urgencyUrgent'),
-    urgencyOverdue: t('urgencyOverdue'),
-    markReceived: t('markReceived'),
-    markReady: t('markReady'),
-    dispatch: t('dispatch'),
-    assignBags: t('assignBags'),
-    assignDriver: t('assignDriver'),
-    scanVerify: t('scanVerify'),
-    addNote: t('addNote'),
-    notePlaceholder: t('notePlaceholder'),
-    noteSubmit: t('noteSubmit'),
-    noteCancel: t('noteCancel'),
-    pickupBags: t('pickupBags'),
-    processingBags: t('processingBags'),
-  }
-
-  const boardLabels = {
-    boardIncoming: t('boardIncoming'),
-    boardProcessing: t('boardProcessing'),
-    boardReady: t('boardReady'),
-    selectedLabel: t('selectedLabel'),
-    bulkMarkSelectedReceived: t('bulkMarkSelectedReceived'),
-    bulkMarkSelectedReady: t('bulkMarkSelectedReady'),
-    bulkDispatchSelected: t('bulkDispatchSelected'),
-  }
-
-  const scanLabels = {
-    title: t('scanVerifyTitle'),
-    subtitle: t('scanVerifySubtitle'),
-    tapToVerify: t('tapToVerify'),
-    verified: t('verified'),
-    allVerified: t('allVerified'),
-    verifyRequired: t('verifyRequired'),
-  }
-
-  const driverLabels = {
-    assignDriver: t('assignDriver'),
-    reassignDriver: t('reassignDriver'),
-    autoAssign: t('autoAssign'),
-    searchPlaceholder: t('searchDriverPlaceholder'),
-  }
-
-  const itemLabels = {
-    title: t('assignItemsToBag'),
-    selectItems: t('selectItems'),
-    selectQuantity: t('selectQuantity'),
-    addAssignment: t('addAssignment'),
-    selectBag: t('selectBag'),
-    searchBagPlaceholder: t('searchBagPlaceholder'),
-    currentAssignments: t('currentAssignments'),
-    remaining: t('remaining'),
-    unassigned: t('unassigned'),
-    done: t('done'),
-    back: t('back'),
-    noBagsFound: t('noBagsFound'),
-    edit: t('editAssignment'),
-    delete: t('deleteAssignment'),
-    save: t('saveAssignment'),
-    cancel: t('cancelAssignment'),
-  }
-
-  const alertLabels = {
-    title: t('alertOverdueTitle'),
-    subtitle: t('alertOverdueSubtitle'),
-    affectedOrders: t('alertAffectedOrders'),
-  }
-
   const stageConfirmDescription = useMemo(() => {
     if (!stageActionTarget) return ''
 
@@ -266,12 +154,11 @@ export const LaundryOperationsPage = () => {
         <OperationalAlerts
           overdueAlert={overdueAlert}
           orders={allOrders}
-          labels={alertLabels}
           onOrderClick={(order) => setActiveStage(order.stage)}
         />
       </motion.div>
 
-      <LaundryStatsSection stats={stats} isLoading={isStatsLoading} labels={statsLabels} />
+      <LaundryStatsSection stats={stats} isLoading={isStatsLoading} />
 
       <LaundryFiltersSection
         search={search}
@@ -284,7 +171,6 @@ export const LaundryOperationsPage = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         searchInputRef={searchRef}
-        labels={filterLabels}
       />
 
       <motion.div {...fadeUp(0.36)}>
@@ -312,8 +198,6 @@ export const LaundryOperationsPage = () => {
           onAssignBags={setItemAssignOrder}
           onAssignDriver={setAssignDriverOrder}
           onAddNote={handleAddNote}
-          labels={listLabels}
-          cardLabels={cardLabels}
         />
       ) : (
         <LaundryBoardView
@@ -328,8 +212,6 @@ export const LaundryOperationsPage = () => {
           onMoveOrder={moveOrder}
           onBulkSelectedAction={handleBulkSelectedAction}
           onClearSelection={clearSelection}
-          labels={boardLabels}
-          cardLabels={cardLabels}
         />
       )}
 
@@ -340,7 +222,6 @@ export const LaundryOperationsPage = () => {
         verifiedBags={verifiedBags}
         onVerifyBag={handleVerifyBag}
         onConfirm={handleScanVerifyConfirm}
-        labels={scanLabels}
       />
 
       <BulkConfirmModal
@@ -361,7 +242,6 @@ export const LaundryOperationsPage = () => {
         drivers={drivers}
         onAssign={handleAssignDriver}
         onAutoAssign={handleAutoAssign}
-        labels={driverLabels}
       />
 
       <ItemBagAssignmentModal
@@ -373,7 +253,6 @@ export const LaundryOperationsPage = () => {
         onSaveAssignments={(orderId, assignments, bags) =>
           void handleSaveBagAssignments(orderId, assignments, bags)
         }
-        labels={itemLabels}
       />
 
       <KeyboardShortcutsHint shortcuts={shortcuts} hintLabel={t('shortcutHint')} />

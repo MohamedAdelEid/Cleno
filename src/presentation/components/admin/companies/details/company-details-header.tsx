@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft, Bell, ChevronRight, Edit, Info } from 'lucide-react'
+import { AlertTriangle, Bell, ChevronRight, Edit, Info } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import type { CompanyAlert, CompanyDetailsData } from '@/domain/entities/company-details.entity'
@@ -9,11 +9,7 @@ import { Button } from '@/presentation/components/ui/button'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn, PAGE_EASE } from '@/presentation/utils'
 import { ROUTES } from '@/presentation/routes/routes.constants'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/presentation/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/presentation/components/ui/popover'
 
 const getInitials = (name: string) =>
   name
@@ -27,10 +23,7 @@ interface CompanyDetailsHeaderProps {
   onToggleActive: () => void
 }
 
-export const CompanyDetailsHeader = ({
-  company,
-  onToggleActive,
-}: CompanyDetailsHeaderProps) => {
+export const CompanyDetailsHeader = ({ company, onToggleActive }: CompanyDetailsHeaderProps) => {
   const { t } = useTranslation('companies')
 
   return (
@@ -40,14 +33,6 @@ export const CompanyDetailsHeader = ({
       transition={{ duration: 0.38, ease: PAGE_EASE }}
       className="space-y-4"
     >
-      <Link
-        to={ROUTES.COMPANIES.INDEX}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" strokeWidth={2} />
-        {t('detailsBack')}
-      </Link>
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="size-14 border-2 border-border/60">
@@ -59,10 +44,11 @@ export const CompanyDetailsHeader = ({
 
           <div className="min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                {company.name}
-              </h1>
-              <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-normal text-muted-foreground">
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{company.name}</h1>
+              <Badge
+                variant="outline"
+                className="h-5 px-1.5 text-[10px] font-normal text-muted-foreground"
+              >
                 {company.type}
               </Badge>
             </div>
@@ -78,7 +64,12 @@ export const CompanyDetailsHeader = ({
                     : 'border-red-200/80 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60',
                 )}
               >
-                <span className={cn('size-1.5 rounded-full', company.isActive ? 'bg-emerald-500' : 'bg-red-500')} />
+                <span
+                  className={cn(
+                    'size-1.5 rounded-full',
+                    company.isActive ? 'bg-emerald-500' : 'bg-red-500',
+                  )}
+                />
                 {company.isActive ? t('detailsActive') : t('detailsInactive')}
               </button>
 
@@ -91,7 +82,7 @@ export const CompanyDetailsHeader = ({
 
         <div className="flex shrink-0 items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.COMPANIES.EDIT.replace(':companyId', company.id)}>
+            <Link to={ROUTES.COMPANIES.EDIT.replace(':companyId', company.slug)}>
               <Edit className="size-3.5" />
               {t('detailsEditCompany')}
             </Link>
@@ -135,7 +126,10 @@ const AlertsPopover = ({ alerts, label }: AlertsPopoverProps) => {
             >
               <span className="mt-0.5 shrink-0">
                 {alert.severity === 'warning' ? (
-                  <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+                  <AlertTriangle
+                    className="size-4 text-amber-600 dark:text-amber-400"
+                    strokeWidth={2}
+                  />
                 ) : (
                   <Info className="size-4 text-sky-600 dark:text-sky-400" strokeWidth={2} />
                 )}

@@ -6,12 +6,20 @@ import type {
   SetFeaturedRolesRequestDto,
   RoleUserAssignmentRequestDto,
   RoleAvailableUsersParams,
+  RolePermissionsDto,
 } from '@/application/dtos/roles/roles-admin.dto'
 import type { CreateRoleRequestDto } from '@/application/dtos/roles/create-role.dto'
-import type { ManagedRole, RoleMember } from '@/domain/entities'
+import type { ManagedRole, PermissionModuleGroup, RoleMember } from '@/domain/entities'
 import type { RoleFormValues } from '@/domain/schemas'
 import type { RolesAdminList } from '@/domain/types'
 import { RoleStatus } from '@/domain/enums'
+import { permissionAdapter } from './permission.adapter'
+
+const getPhotoUrl = (photo: RoleUserDto['photo']): string | null => {
+  if (!photo) return null
+  if (typeof photo === 'string') return photo
+  return photo.url ?? photo.path ?? null
+}
 
 const toRoleStatus = (isActive: boolean): RoleStatus =>
   isActive ? RoleStatus.Active : RoleStatus.Inactive
@@ -21,12 +29,13 @@ const toRoleMember = (user: RoleUserDto): RoleMember => ({
   fullName: user.fullName,
   email: user.email,
   initials: user.initials,
-  avatarUrl: null,
+  avatarUrl: getPhotoUrl(user.photo),
   status: toRoleStatus(user.isActive),
 })
 
 const toManagedRole = (item: RoleAdminItemDto): ManagedRole => ({
   id: item.id,
+  slug: item.slug ?? item.id,
   name: item.name,
   description: item.description ?? '',
   permissions: [],
@@ -113,6 +122,10 @@ export const roleAdapter = {
 
   toRoleMembers(users: RoleUserDto[]): RoleMember[] {
     return users.map(toRoleMember)
+  },
+
+  toAssignedPermissionGroups(dto: RolePermissionsDto): PermissionModuleGroup[] {
+    return permissionAdapter.toModuleGroups(dto.permissionGroups ?? [])
   },
 
   toAvailableUsersParams(params: RoleAvailableUsersParams): Record<string, unknown> {

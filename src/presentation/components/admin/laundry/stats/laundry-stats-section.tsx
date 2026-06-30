@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 
 import type { LaundryStats } from '@/domain/entities/laundry-order.entity'
 import { Skeleton } from '@/presentation/components/ui/skeleton'
+import { useTranslation } from '@/presentation/hooks/use-translation'
 import { cn } from '@/presentation/utils'
 
 const CARD_EASE = [0.25, 0.1, 0.25, 1] as const
@@ -18,13 +19,6 @@ interface StatItem {
 interface LaundryStatsSectionProps {
   stats: LaundryStats | null
   isLoading?: boolean
-  labels: {
-    receivedToday: string
-    processedToday: string
-    dispatchedToday: string
-    avgProcessingTime: string
-    bagsInLaundry: string
-  }
 }
 
 const StatSkeleton = ({ index }: { index: number }) => (
@@ -42,7 +36,9 @@ const StatSkeleton = ({ index }: { index: number }) => (
   </motion.article>
 )
 
-export const LaundryStatsSection = ({ stats, isLoading = false, labels }: LaundryStatsSectionProps) => {
+export const LaundryStatsSection = ({ stats, isLoading = false }: LaundryStatsSectionProps) => {
+  const { t } = useTranslation('laundry')
+
   if (isLoading || !stats) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -54,11 +50,11 @@ export const LaundryStatsSection = ({ stats, isLoading = false, labels }: Laundr
   }
 
   const items: StatItem[] = [
-    { title: labels.receivedToday, value: stats.receivedToday, icon: ArrowDownToLine, accent: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40' },
-    { title: labels.processedToday, value: stats.processedToday, icon: ShoppingBag, accent: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/40' },
-    { title: labels.dispatchedToday, value: stats.dispatchedToday, icon: Send, accent: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/40' },
-    { title: labels.avgProcessingTime, value: stats.avgProcessingTime, icon: Clock, accent: 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40' },
-    { title: labels.bagsInLaundry, value: stats.bagsInLaundry, icon: Package, accent: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/40' },
+    { title: t('statReceivedToday'), value: stats.receivedToday, icon: ArrowDownToLine, accent: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40' },
+    { title: t('statProcessedToday'), value: stats.processedToday, icon: ShoppingBag, accent: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/40' },
+    { title: t('statDispatchedToday'), value: stats.dispatchedToday, icon: Send, accent: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/40' },
+    { title: t('statAvgProcessingTime'), value: stats.avgProcessingTime, icon: Clock, accent: 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40' },
+    { title: t('statBagsInLaundry'), value: stats.bagsInLaundry, icon: Package, accent: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/40' },
   ]
 
   return (

@@ -35,7 +35,7 @@ import { Button } from '@/presentation/components/ui/button'
 import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useDirection } from '@/presentation/hooks/use-direction'
 import { useTranslation } from '@/presentation/hooks/use-translation'
-import { buildCompanyEditPath } from '@/presentation/routes/company.routes'
+import { ROUTES } from '@/presentation/routes/routes.constants'
 import { createCompaniesColumns } from './companies-columns'
 
 interface CompaniesTableSectionProps {
@@ -55,9 +55,7 @@ interface CompaniesTableSectionProps {
 
 type PendingActionType = 'approve' | 'reject' | 'activate' | 'deactivate'
 
-type PendingAction =
-  | { type: PendingActionType; ids: string[]; companyName?: string }
-  | null
+type PendingAction = { type: PendingActionType; ids: string[]; companyName?: string } | null
 
 const TableSkeleton = () => (
   <div className="space-y-2 px-1 py-2">
@@ -233,7 +231,14 @@ export const CompaniesTableSection = ({
 
   const handleEditCompany = useCallback(
     (company: ManagedCompany) => {
-      navigate(buildCompanyEditPath(company.id))
+      navigate(ROUTES.COMPANIES.edit(company.slug))
+    },
+    [navigate],
+  )
+
+  const handleViewCompany = useCallback(
+    (company: ManagedCompany) => {
+      navigate(ROUTES.COMPANIES.details(company.slug))
     },
     [navigate],
   )
@@ -269,11 +274,7 @@ export const CompaniesTableSection = ({
         },
         {
           locale: isRtl ? 'ar-BH' : 'en-BH',
-          onViewClick: () =>
-            notify.info({
-              title: t('view'),
-              description: t('viewCompanyComingSoon'),
-            }),
+          onViewClick: handleViewCompany,
           onEditClick: handleEditCompany,
           onDeleteClick: (company) => setDeleteTarget(company),
           onApproveClick: (company) => openSingleAction('approve', company),
@@ -282,7 +283,7 @@ export const CompaniesTableSection = ({
           onDeactivateClick: (company) => openSingleAction('deactivate', company),
         },
       ),
-    [handleEditCompany, isRtl, openSingleAction, t],
+    [handleEditCompany, handleViewCompany, isRtl, openSingleAction, t],
   )
 
   const paginationLabels = useMemo(
@@ -326,9 +327,7 @@ export const CompaniesTableSection = ({
                         variant="outline"
                         size="xs"
                         disabled={isMutating}
-                        onClick={() =>
-                          setPendingAction({ type: 'approve', ids: bulkApproveIds })
-                        }
+                        onClick={() => setPendingAction({ type: 'approve', ids: bulkApproveIds })}
                       >
                         <CircleCheck />
                         {t('approve')}
@@ -352,9 +351,7 @@ export const CompaniesTableSection = ({
                         variant="outline"
                         size="xs"
                         disabled={isMutating}
-                        onClick={() =>
-                          setPendingAction({ type: 'activate', ids: bulkActivateIds })
-                        }
+                        onClick={() => setPendingAction({ type: 'activate', ids: bulkActivateIds })}
                       >
                         <CircleCheck />
                         {t('makeActive')}
@@ -422,9 +419,7 @@ export const CompaniesTableSection = ({
             onPageChange={(pageIndex) =>
               onPaginationStateChange((current) => ({ ...current, pageIndex }))
             }
-            onPageSizeChange={(pageSize) =>
-              onPaginationStateChange({ pageIndex: 0, pageSize })
-            }
+            onPageSizeChange={(pageSize) => onPaginationStateChange({ pageIndex: 0, pageSize })}
             labels={paginationLabels}
           />
         }

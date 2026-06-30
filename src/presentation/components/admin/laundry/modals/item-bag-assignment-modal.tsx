@@ -2,7 +2,11 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Check, Package, Pencil, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import type { ItemBagAssignment, LaundryBag, LaundryOrder } from '@/domain/entities/laundry-order.entity'
+import type {
+  ItemBagAssignment,
+  LaundryBag,
+  LaundryOrder,
+} from '@/domain/entities/laundry-order.entity'
 import { BagStatus } from '@/domain/enums'
 import { Button } from '@/presentation/components/ui/button'
 import { Checkbox } from '@/presentation/components/ui/checkbox'
@@ -15,11 +19,9 @@ import {
 } from '@/presentation/components/ui/dialog'
 import { SearchInput } from '@/presentation/components/ui/search-input'
 import { cn } from '@/presentation/utils'
+import { useTranslation } from '@/presentation/hooks/use-translation'
 
-import {
-  getAssignedQuantity,
-  getRemainingQuantity,
-} from '../shared/laundry-order.utils'
+import { getAssignedQuantity, getRemainingQuantity } from '../shared/laundry-order.utils'
 
 type ModalStep = 'items' | 'bag'
 
@@ -34,24 +36,6 @@ interface ItemBagAssignmentModalProps {
     bagAssignments: ItemBagAssignment[],
     processingBags: LaundryBag[],
   ) => void
-  labels: {
-    title: string
-    selectItems: string
-    selectQuantity: string
-    addAssignment: string
-    selectBag: string
-    searchBagPlaceholder: string
-    currentAssignments: string
-    remaining: string
-    unassigned: string
-    done: string
-    back: string
-    noBagsFound: string
-    edit: string
-    delete: string
-    save: string
-    cancel: string
-  }
 }
 
 export const ItemBagAssignmentModal = ({
@@ -61,10 +45,12 @@ export const ItemBagAssignmentModal = ({
   isLoading = false,
   availableBags,
   onSaveAssignments,
-  labels,
 }: ItemBagAssignmentModalProps) => {
+  const { t } = useTranslation('laundry')
   const [step, setStep] = useState<ModalStep>('items')
-  const [selections, setSelections] = useState<Record<string, { checked: boolean; quantity: number }>>({})
+  const [selections, setSelections] = useState<
+    Record<string, { checked: boolean; quantity: number }>
+  >({})
   const [bagQuery, setBagQuery] = useState('')
   const [localAssignments, setLocalAssignments] = useState<ItemBagAssignment[]>([])
   const [localBags, setLocalBags] = useState<{ id: string; bagId: string }[]>([])
@@ -87,13 +73,22 @@ export const ItemBagAssignmentModal = ({
     return [...persisted, ...added]
   }, [order, localBags])
 
-  const filteredBags = useMemo(() => {
-    const pool = [...availableBags, ...allBags]
-    const unique = Array.from(new Map(pool.map((b) => [b.bagId, b])).values())
+  const assignedBagIds = useMemo(
+    () => new Set(effectiveAssignments.map((assignment) => assignment.bagId)),
+    [effectiveAssignments],
+  )
+
+  const selectableBags = useMemo(() => {
+    const pool = availableBags.filter((bag) => !assignedBagIds.has(bag.id))
     const q = bagQuery.trim().toLowerCase()
-    if (!q) return unique
-    return unique.filter((b) => b.bagId.toLowerCase().includes(q))
-  }, [availableBags, allBags, bagQuery])
+    if (!q) return pool
+    return pool.filter((bag) => bag.bagId.toLowerCase().includes(q))
+  }, [availableBags, assignedBagIds, bagQuery])
+
+  const hasSelectableBags = useMemo(
+    () => availableBags.some((bag) => !assignedBagIds.has(bag.id)),
+    [availableBags, assignedBagIds],
+  )
 
   const resetState = () => {
     setStep('items')
@@ -135,6 +130,9 @@ export const ItemBagAssignmentModal = ({
   }
 
   const handleSelectBag = (bag: { id: string; bagId: string }) => {
+    if (assignedBagIds.has(bag.id)) return
+    if (!availableBags.some((item) => item.id === bag.id)) return
+
     const newAssignments: ItemBagAssignment[] = pendingSelections.map((sel, i) => ({
       id: `local-${Date.now()}-${i}`,
       itemId: sel.itemId,
@@ -172,9 +170,7 @@ export const ItemBagAssignmentModal = ({
   }
 
   const hasChanges =
-    localAssignments.length > 0 ||
-    removedIds.size > 0 ||
-    Object.keys(editedQty).length > 0
+    localAssignments.length > 0 || removedIds.size > 0 || Object.keys(editedQty).length > 0
 
   const handleDone = () => {
     if (!order) return
@@ -188,13 +184,15 @@ export const ItemBagAssignmentModal = ({
         processingBags.push(existing)
         return
       }
-      const local = localBags.find((b) => b.id === bagId) ?? availableBags.find((b) => b.id === bagId)
+      const local =
+        localBags.find((b) => b.id === bagId) ?? availableBags.find((b) => b.id === bagId)
       if (local) {
         processingBags.push({
           id: local.id,
           bagId: local.bagId,
           status: BagStatus.Processing,
           verified: true,
+          quantity: 0,
         })
       }
     })
@@ -204,15 +202,10 @@ export const ItemBagAssignmentModal = ({
     onOpenChange(false)
   }
 
-  const handleUseCustomBag = () => {
-    const bagNumber = bagQuery.trim()
-    if (!bagNumber) return
-
-    handleSelectBag({
-      id: `custom-${bagNumber}`,
-      bagId: bagNumber,
-    })
-  }
+  const emptyBagListMessage =
+    !bagQuery.trim() && availableBags.length > 0 && !hasSelectableBags
+      ? t('allBagsAssigned')
+      : t('noBagsFound')
 
   return (
     <Dialog open={open && !!order} onOpenChange={handleOpenChange}>
@@ -222,7 +215,7 @@ export const ItemBagAssignmentModal = ({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Package className="size-5 text-primary" strokeWidth={2} />
-                {labels.title}
+                {t('assignItemsToBag')}
               </DialogTitle>
               <DialogDescription>
                 {order.orderNumber} — {order.customer.name}
@@ -235,201 +228,214 @@ export const ItemBagAssignmentModal = ({
                 <div className="h-24 animate-pulse rounded-lg bg-muted" />
               </div>
             ) : (
-            <div className="flex-1 space-y-4 overflow-y-auto py-2">
-              {effectiveAssignments.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">{labels.currentAssignments}</p>
-                  <div className="space-y-1.5">
-                    {effectiveAssignments.map((assignment) => {
-                      const item = order.items.find((i) => i.id === assignment.itemId)
-                      const bag = allBags.find((b) => b.id === assignment.bagId)
-                      const isEditing = editingId === assignment.id
-                      const maxQty =
-                        (item?.quantity ?? assignment.quantity) -
-                        getAssignedQuantity(assignment.itemId, effectiveAssignments) +
-                        assignment.quantity
-
-                      return (
-                        <div
-                          key={assignment.id}
-                          className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-foreground">
-                              {item?.name ?? '—'} → <span className="font-mono">{bag?.bagId ?? '—'}</span>
-                            </p>
-                            {isEditing ? (
-                              <div className="mt-1.5 flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  max={maxQty}
-                                  defaultValue={assignment.quantity}
-                                  id={`edit-${assignment.id}`}
-                                  className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs"
-                                />
-                                <Button
-                                  size="xs"
-                                  onClick={() => {
-                                    const input = document.getElementById(`edit-${assignment.id}`) as HTMLInputElement
-                                    handleSaveEdit(assignment.id, Number(input.value))
-                                  }}
-                                >
-                                  {labels.save}
-                                </Button>
-                                <Button variant="ghost" size="xs" onClick={() => setEditingId(null)}>
-                                  {labels.cancel}
-                                </Button>
-                              </div>
-                            ) : (
-                              <p className="text-[10px] text-muted-foreground">× {assignment.quantity}</p>
-                            )}
-                          </div>
-                          {!isEditing && (
-                            <div className="flex shrink-0 gap-0.5">
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => setEditingId(assignment.id)}
-                                aria-label={labels.edit}
-                              >
-                                <Pencil className="size-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => handleRemoveAssignment(assignment.id)}
-                                aria-label={labels.delete}
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <AnimatePresence mode="wait">
-                {step === 'items' ? (
-                  <motion.div
-                    key="items"
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 6 }}
-                    transition={{ duration: 0.18 }}
-                    className="space-y-2"
-                  >
-                    <p className="text-xs font-medium text-muted-foreground">{labels.selectItems}</p>
+              <div className="flex-1 space-y-4 overflow-y-auto py-2">
+                {effectiveAssignments.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {t('currentAssignments')}
+                    </p>
                     <div className="space-y-1.5">
-                      {order.items.map((item) => {
-                        const remaining = getRemainingQuantity(item, effectiveAssignments)
-                        const assigned = getAssignedQuantity(item.id, effectiveAssignments)
-                        const sel = selections[item.id]
-                        if (remaining === 0) return null
+                      {effectiveAssignments.map((assignment) => {
+                        const item = order.items.find((i) => i.id === assignment.itemId)
+                        const bag = allBags.find((b) => b.id === assignment.bagId)
+                        const isEditing = editingId === assignment.id
+                        const maxQty =
+                          (item?.quantity ?? assignment.quantity) -
+                          getAssignedQuantity(assignment.itemId, effectiveAssignments) +
+                          assignment.quantity
 
                         return (
                           <div
-                            key={item.id}
-                            className={cn(
-                              'flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors',
-                              sel?.checked ? 'border-primary/40 bg-primary/5' : 'border-border/50',
-                            )}
+                            key={assignment.id}
+                            className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2"
                           >
-                            <Checkbox
-                              checked={sel?.checked ?? false}
-                              onCheckedChange={() => toggleItem(item.id, remaining)}
-                            />
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-foreground">{item.name}</p>
-                              <p className="text-[10px] text-muted-foreground">
-                                {assigned > 0
-                                  ? `${labels.remaining}: ${remaining} / ${item.quantity}`
-                                  : labels.unassigned}
+                              <p className="text-xs font-medium text-foreground">
+                                {item?.name ?? '—'} →{' '}
+                                <span className="font-mono">{bag?.bagId ?? '—'}</span>
                               </p>
+                              {isEditing ? (
+                                <div className="mt-1.5 flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={maxQty}
+                                    defaultValue={assignment.quantity}
+                                    id={`edit-${assignment.id}`}
+                                    className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs"
+                                  />
+                                  <Button
+                                    size="xs"
+                                    onClick={() => {
+                                      const input = document.getElementById(
+                                        `edit-${assignment.id}`,
+                                      ) as HTMLInputElement
+                                      handleSaveEdit(assignment.id, Number(input.value))
+                                    }}
+                                  >
+                                    {t('saveAssignment')}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="xs"
+                                    onClick={() => setEditingId(null)}
+                                  >
+                                    {t('cancelAssignment')}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <p className="text-[10px] text-muted-foreground">
+                                  × {assignment.quantity}
+                                </p>
+                              )}
                             </div>
-                            {sel?.checked && (
-                              <input
-                                type="number"
-                                min={1}
-                                max={remaining}
-                                value={sel.quantity}
-                                onChange={(e) =>
-                                  setItemQuantity(item.id, Number(e.target.value), remaining)
-                                }
-                                className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs"
-                              />
+                            {!isEditing && (
+                              <div className="flex shrink-0 gap-0.5">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  onClick={() => setEditingId(assignment.id)}
+                                  aria-label={t('editAssignment')}
+                                >
+                                  <Pencil className="size-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => handleRemoveAssignment(assignment.id)}
+                                  aria-label={t('deleteAssignment')}
+                                >
+                                  <Trash2 className="size-3" />
+                                </Button>
+                              </div>
                             )}
                           </div>
                         )
                       })}
                     </div>
-                    <Button
-                      className="w-full"
-                      size="sm"
-                      disabled={pendingSelections.length === 0}
-                      onClick={() => setStep('bag')}
-                    >
-                      {labels.addAssignment}
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="bag"
-                    initial={{ opacity: 0, x: 6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -6 }}
-                    transition={{ duration: 0.18 }}
-                    className="space-y-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon-xs" onClick={() => setStep('items')}>
-                        <ArrowLeft className="size-3.5" />
-                      </Button>
-                      <p className="text-xs font-medium text-muted-foreground">{labels.selectBag}</p>
-                    </div>
-                    <SearchInput
-                      value={bagQuery}
-                      onValueChange={setBagQuery}
-                      placeholder={labels.searchBagPlaceholder}
-                    />
-                    <div className="max-h-48 space-y-1.5 overflow-y-auto">
-                      {filteredBags.length === 0 ? (
-                        <div className="space-y-2 py-4 text-center">
-                          <p className="text-xs text-muted-foreground">{labels.noBagsFound}</p>
-                          {bagQuery.trim() && (
-                            <Button size="sm" variant="outline" onClick={handleUseCustomBag}>
-                              {bagQuery.trim()}
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        filteredBags.map((bag) => (
-                          <button
-                            key={bag.id}
-                            type="button"
-                            onClick={() => handleSelectBag(bag)}
-                            className="flex w-full items-center justify-between rounded-lg border border-border/50 px-3 py-2.5 transition-all hover:border-primary/40 hover:bg-muted/30"
-                          >
-                            <span className="font-mono text-sm font-medium">{bag.bagId}</span>
-                            <Search className="size-3.5 text-muted-foreground" />
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
-            </div>
+
+                <AnimatePresence mode="wait">
+                  {step === 'items' ? (
+                    <motion.div
+                      key="items"
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 6 }}
+                      transition={{ duration: 0.18 }}
+                      className="space-y-2"
+                    >
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {t('selectItems')}
+                      </p>
+                      <div className="space-y-1.5">
+                        {order.items.map((item) => {
+                          const remaining = getRemainingQuantity(item, effectiveAssignments)
+                          const assigned = getAssignedQuantity(item.id, effectiveAssignments)
+                          const sel = selections[item.id]
+                          if (remaining === 0) return null
+
+                          return (
+                            <div
+                              key={item.id}
+                              className={cn(
+                                'flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors',
+                                sel?.checked
+                                  ? 'border-primary/40 bg-primary/5'
+                                  : 'border-border/50',
+                              )}
+                            >
+                              <Checkbox
+                                checked={sel?.checked ?? false}
+                                onCheckedChange={() => toggleItem(item.id, remaining)}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-foreground">{item.name}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {assigned > 0
+                                    ? `${t('remaining')}: ${remaining} / ${item.quantity}`
+                                    : `${t('unassigned')}: ${remaining} / ${item.quantity}`}
+                                </p>
+                              </div>
+                              {sel?.checked && (
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={remaining}
+                                  value={sel.quantity}
+                                  onChange={(e) =>
+                                    setItemQuantity(item.id, Number(e.target.value), remaining)
+                                  }
+                                  className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs"
+                                />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <Button
+                        className="w-full"
+                        size="sm"
+                        disabled={pendingSelections.length === 0 || !hasSelectableBags}
+                        onClick={() => setStep('bag')}
+                      >
+                        {t('addAssignment')}
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="bag"
+                      initial={{ opacity: 0, x: 6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -6 }}
+                      transition={{ duration: 0.18 }}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon-xs" onClick={() => setStep('items')}>
+                          <ArrowLeft className="size-3.5" />
+                        </Button>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {t('selectBag')}
+                        </p>
+                      </div>
+                      <SearchInput
+                        value={bagQuery}
+                        onValueChange={setBagQuery}
+                        placeholder={t('searchBagPlaceholder')}
+                        className="mx-[3px]"
+                      />
+                      <div className="max-h-48 space-y-1.5 overflow-y-auto">
+                        {selectableBags.length === 0 ? (
+                          <div className="py-4 text-center">
+                            <p className="text-xs text-muted-foreground">{emptyBagListMessage}</p>
+                          </div>
+                        ) : (
+                          selectableBags.map((bag) => (
+                            <button
+                              key={bag.id}
+                              type="button"
+                              onClick={() => handleSelectBag(bag)}
+                              className="flex w-full items-center justify-between rounded-lg border border-border/50 px-3 py-2.5 transition-all hover:border-primary/40 hover:bg-muted/30"
+                            >
+                              <span className="font-mono text-sm font-medium">{bag.bagId}</span>
+                              <Search className="size-3.5 text-muted-foreground" />
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
             {!isLoading && hasChanges && step === 'items' && (
               <Button className="w-full gap-2" onClick={handleDone}>
                 <Check className="size-4" />
-                {labels.done}
+                {t('done')}
               </Button>
             )}
           </>

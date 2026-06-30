@@ -4,8 +4,9 @@ import { useEffect } from 'react'
 
 import type { LaundryOrder } from '@/domain/entities/laundry-order.entity'
 import { LaundryWorkflowStage } from '@/domain/enums'
+import { useTranslation } from '@/presentation/hooks/use-translation'
 
-import { OrderCard, type OrderCardLabels } from '../cards/order-card'
+import { OrderCard } from '../cards/order-card'
 import { LaundryBulkBar } from './laundry-bulk-bar'
 import { WorkflowTabs } from '../tabs/workflow-tabs'
 
@@ -23,21 +24,6 @@ interface LaundryListViewProps {
   onAssignBags: (order: LaundryOrder) => void
   onAssignDriver: (order: LaundryOrder) => void
   onAddNote: (orderId: string, content: string) => void
-  labels: {
-    tabIncoming: string
-    tabInLaundry: string
-    tabReady: string
-    emptyIncoming: string
-    emptyInLaundry: string
-    emptyReady: string
-    selectedLabel: string
-    selectAll: string
-    deselectAll: string
-    bulkMarkSelectedReceived: string
-    bulkMarkSelectedReady: string
-    bulkDispatchSelected: string
-  }
-  cardLabels: OrderCardLabels
 }
 
 export const LaundryListView = ({
@@ -54,17 +40,17 @@ export const LaundryListView = ({
   onAssignBags,
   onAssignDriver,
   onAddNote,
-  labels,
-  cardLabels,
 }: LaundryListViewProps) => {
+  const { t } = useTranslation('laundry')
+
   const incoming = orders.filter((o) => o.stage === LaundryWorkflowStage.IncomingToLaundry)
   const inLaundry = orders.filter((o) => o.stage === LaundryWorkflowStage.InLaundry)
   const ready = orders.filter((o) => o.stage === LaundryWorkflowStage.ReadyForDelivery)
 
   const tabs = [
-    { stage: LaundryWorkflowStage.IncomingToLaundry, label: labels.tabIncoming, count: incoming.length },
-    { stage: LaundryWorkflowStage.InLaundry, label: labels.tabInLaundry, count: inLaundry.length },
-    { stage: LaundryWorkflowStage.ReadyForDelivery, label: labels.tabReady, count: ready.length },
+    { stage: LaundryWorkflowStage.IncomingToLaundry, label: t('tabIncoming'), count: incoming.length },
+    { stage: LaundryWorkflowStage.InLaundry, label: t('tabInLaundry'), count: inLaundry.length },
+    { stage: LaundryWorkflowStage.ReadyForDelivery, label: t('tabReady'), count: ready.length },
   ]
 
   const activeOrders =
@@ -76,17 +62,17 @@ export const LaundryListView = ({
 
   const emptyMessage =
     activeStage === LaundryWorkflowStage.IncomingToLaundry
-      ? labels.emptyIncoming
+      ? t('emptyIncoming')
       : activeStage === LaundryWorkflowStage.InLaundry
-        ? labels.emptyInLaundry
-        : labels.emptyReady
+        ? t('emptyInLaundry')
+        : t('emptyReady')
 
   const bulkActionLabel =
     activeStage === LaundryWorkflowStage.IncomingToLaundry
-      ? labels.bulkMarkSelectedReceived
+      ? t('bulkMarkSelectedReceived')
       : activeStage === LaundryWorkflowStage.InLaundry
-        ? labels.bulkMarkSelectedReady
-        : labels.bulkDispatchSelected
+        ? t('bulkMarkSelectedReady')
+        : t('bulkDispatchSelected')
 
   const selectedInStage = activeOrders.filter((o) => selectedIds.has(o.id))
   const hasSelection = selectedInStage.length > 0
@@ -110,7 +96,6 @@ export const LaundryListView = ({
               <OrderCard
                 key={order.id}
                 order={order}
-                labels={cardLabels}
                 selected={selectedIds.has(order.id)}
                 onSelectChange={onSelectChange}
                 onStageAction={onStageAction}
@@ -127,11 +112,11 @@ export const LaundryListView = ({
       <LaundryBulkBar
         visible={hasSelection}
         selectedCount={selectedInStage.length}
-        selectedLabel={labels.selectedLabel}
+        selectedLabel={t('selectedLabel')}
         actionLabel={bulkActionLabel}
         onAction={onBulkSelectedAction}
         onClear={onClearSelection}
-        selectAllLabel={allSelected ? labels.deselectAll : labels.selectAll}
+        selectAllLabel={allSelected ? t('deselectAll') : t('selectAll')}
         onSelectAllToggle={() =>
           allSelected
             ? onClearSelection()

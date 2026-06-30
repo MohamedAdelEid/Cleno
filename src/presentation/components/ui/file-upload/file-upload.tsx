@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/presentation/components/ui/button'
+import { fileUploadApi } from '@/infrastructure/api/file-upload.api'
 import { useFileUpload } from '@/presentation/hooks/use-file-upload'
 import { cn } from '@/presentation/utils'
 import { FileUploadPreviewItem } from './file-upload-preview-item'
@@ -20,6 +21,29 @@ const createPreviewItem = (file: File): FilePreviewItem => ({
   isImage: file.type.startsWith('image/'),
 })
 
+const IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|gif|webp|svg|bmp|avif)(?:$|\?)/i
+
+const isImageReference = (value: string | null | undefined): boolean =>
+  !!value && IMAGE_EXTENSION_PATTERN.test(value)
+
+const getFileNameFromPath = (path: string | null | undefined): string | null => {
+  if (!path) return null
+  const cleanPath = path.split('?')[0]?.split('#')[0] ?? path
+  const name = cleanPath.split(/[\\/]/).pop()
+  return name || null
+}
+
+const saveBlob = (blob: Blob, fileName: string) => {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 export const FileUpload = ({
   value,
   onChange,
@@ -30,6 +54,7 @@ export const FileUpload = ({
   disabled,
   labels,
   existingPreviewUrl,
+  existingFileName,
   existingFilePath,
   onExistingPreviewRemove,
   autoUpload = false,
@@ -239,6 +264,17 @@ export const FileUpload = ({
     }
   }
 
+  const handleDownload = async (filePath: string | null | undefined, fallbackName: string) => {
+    if (!filePath) return
+
+    const result = await fileUploadApi.download(filePath)
+    if (result.success) {
+      saveBlob(result.data, getFileNameFromPath(filePath) ?? fallbackName)
+    } else {
+      onUploadError?.(result.message)
+    }
+  }
+
   const hasPreview =
     previewItems.length > 0 ||
     !!pendingPreview ||
@@ -257,7 +293,11 @@ export const FileUpload = ({
           previewUrl: uploadedFileUrl,
           name: uploadedFileName ?? labels.existingFile,
           size: 0,
-          isImage: uploadedFileUrl.match(/\.(png|jpe?g|gif|webp|svg)$/i) != null,
+          isImage:
+            isImageReference(uploadedFileUrl) ||
+            isImageReference(uploadedFilePath) ||
+            isImageReference(uploadedFileName),
+          filePath: uploadedFilePath,
           isRemote: true,
         }
       : null
@@ -357,12 +397,29 @@ export const FileUpload = ({
                     item={{
                       id: 'existing-preview',
                       previewUrl: existingPreviewUrl,
-                      name: labels.existingFile,
+                      name:
+                        existingFileName ??
+                        getFileNameFromPath(existingFilePath) ??
+                        labels.existingFile,
                       size: 0,
-                      isImage: true,
+                      isImage:
+                        isImageReference(existingPreviewUrl) ||
+                        isImageReference(existingFilePath) ||
+                        isImageReference(existingFileName),
+                      filePath: existingFilePath,
                       isRemote: true,
                     }}
                     removeLabel={labels.remove}
+                    downloadLabel={labels.download}
+                    onDownload={
+                      existingFilePath
+                        ? () =>
+                            void handleDownload(
+                              existingFilePath,
+                              existingFileName ?? labels.existingFile,
+                            )
+                        : undefined
+                    }
                     onRemove={() => void handleRemoveExisting()}
                     disabled={disabled}
                   />
@@ -373,6 +430,16 @@ export const FileUpload = ({
                     key={uploadedPreviewItem.id}
                     item={uploadedPreviewItem}
                     removeLabel={labels.remove}
+                    downloadLabel={labels.download}
+                    onDownload={
+                      uploadedFilePath
+                        ? () =>
+                            void handleDownload(
+                              uploadedFilePath,
+                              uploadedFileName ?? labels.existingFile,
+                            )
+                        : undefined
+                    }
                     onRemove={() => void handleRemoveUploaded()}
                     disabled={disabled}
                     progress={100}

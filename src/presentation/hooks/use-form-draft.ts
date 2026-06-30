@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { FormDraft, UploadedFile } from '@/domain/types'
 import { draftStorage } from '@/infrastructure/storage/draft.storage'
@@ -22,6 +22,10 @@ export const useFormDraft = <T extends Record<string, unknown>>({
   ttlMs = DEFAULT_TTL_MS,
 }: UseFormDraftOptions): UseFormDraftReturn<T> => {
   const [draft, setDraft] = useState<FormDraft<T> | null>(() => draftStorage.get<T>(key, ttlMs))
+
+  useEffect(() => {
+    setDraft(draftStorage.get<T>(key, ttlMs))
+  }, [key, ttlMs])
 
   const hasDraft = useMemo(() => draft != null, [draft])
 

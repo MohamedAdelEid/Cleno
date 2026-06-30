@@ -8,6 +8,11 @@ import { companies } from './companies'
 import { orders } from './orders'
 import { laundry } from './laundry'
 import { operationalBags } from './operational-bags'
+import { users } from './users'
+import { drivers } from './drivers'
+import { incidents } from './incidents'
+import { timeSlots } from './time-slots'
+import { laundryItems } from './laundry-items'
 
 export const en: Partial<Record<Namespace, Record<string, string>>> = {
   common,
@@ -19,4 +24,9 @@ export const en: Partial<Record<Namespace, Record<string, string>>> = {
   orders,
   laundry,
   operationalBags,
+  users,
+  drivers,
+  incidents,
+  timeSlots,
+  laundryItems,
 }

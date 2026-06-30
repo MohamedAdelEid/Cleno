@@ -106,10 +106,4 @@ export interface OrderAssignDriverRequestDto {
   driverId: string | null
 }
 
-export interface DriverDropdownItemDto {
-  id: string
-  slug: string
-  fullName: string
-  email: string
-  status: number
-}
+export type { DriverDropdownItemDto } from '@/application/dtos/drivers/drivers-admin.dto'

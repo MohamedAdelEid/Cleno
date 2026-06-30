@@ -18,6 +18,7 @@ import type {
   LaundryIncidentReply,
   LaundryOrder,
   LaundryOrderNote,
+  LaundryOrderNoteUser,
   LaundryStats,
 } from '@/domain/entities/laundry-order.entity'
 import {
@@ -84,6 +85,68 @@ const toDriver = (name: string | null): LaundryDriver | null => {
   }
 }
 
+const readRaw = <T>(source: Record<string, unknown>, ...keys: string[]): T | undefined => {
+  for (const key of keys) {
+    const value = source[key]
+    if (value !== undefined && value !== null) return value as T
+  }
+  return undefined
+}
+
+const toNoteUserFromRaw = (user: unknown): LaundryOrderNoteUser | null => {
+  if (!user || typeof user !== 'object') return null
+
+  const raw = user as Record<string, unknown>
+  const id = readRaw<string>(raw, 'id', 'Id')
+  const fullName = readRaw<string>(raw, 'fullName', 'FullName', 'name', 'Name')
+  if (!id || !fullName) return null
+
+  const photo = readRaw<Record<string, unknown>>(raw, 'photo', 'Photo')
+  const avatarUrl = photo
+    ? (readRaw<string>(photo, 'url', 'Url', 'path', 'Path') ?? null)
+    : null
+
+  return {
+    id,
+    fullName,
+    email: readRaw<string>(raw, 'email', 'Email') ?? '',
+    avatarUrl,
+  }
+}
+
+const toOrderNoteFromRaw = (note: unknown): LaundryOrderNote | null => {
+  if (!note || typeof note !== 'object') return null
+
+  const raw = note as Record<string, unknown>
+  const id = readRaw<string>(raw, 'id', 'Id')
+  const content = readRaw<string>(raw, 'content', 'Content')
+  if (!id || !content) return null
+
+  const authorName = readRaw<string>(raw, 'authorName', 'AuthorName') ?? ''
+
+  return {
+    id,
+    content,
+    createdAt: readRaw<string>(raw, 'createdAt', 'CreatedAt') ?? '',
+    updatedAt: readRaw<string | null>(raw, 'updatedAt', 'UpdatedAt') ?? null,
+    author: authorName,
+    lastModifiedBy: toNoteUserFromRaw(readRaw(raw, 'lastModifiedBy', 'LastModifiedBy')),
+  }
+}
+
+const readBoardNote = (dto: LaundryBoardItemDto): unknown =>
+  dto.note ?? readRaw(dto as unknown as Record<string, unknown>, 'Note')
+
+const pickLatestOrderNote = (notes: LaundryOrderNote[]): LaundryOrderNote | null => {
+  if (!notes.length) return null
+
+  return [...notes].sort((a, b) => {
+    const aTime = new Date(a.updatedAt ?? a.createdAt).getTime()
+    const bTime = new Date(b.updatedAt ?? b.createdAt).getTime()
+    return bTime - aTime
+  })[0]
+}
+
 const splitBags = (bags: LaundryBoardItemDto['bags']) => {
   const pickupBags: LaundryBag[] = []
   const processingBags: LaundryBag[] = []
@@ -94,6 +157,7 @@ const splitBags = (bags: LaundryBoardItemDto['bags']) => {
       bagId: bag.bagNumber,
       status: parseBagStatus(bag.bagStatus),
       verified: bag.bagStatus >= 2,
+      quantity: bag.quantity ?? 0,
     }
 
     if (bag.stage === ORDER_BAG_STAGE_PICKUP) {
@@ -186,12 +250,14 @@ export const laundryAdapter = {
         quantity: item.quantity,
       })),
       itemCount: dto.totalItems,
+      pickupDate: dto.pickupDate ?? null,
       pickupTime: dto.pickupTime,
+      deliverByDate: dto.deliverByDate ?? null,
       deliverBy: dto.deliverByTime,
       inLaundrySince: toInLaundrySince(dto.durationInLaundryMinutes),
       driver: toDriver(dto.assignedDriverName),
       incidents: [],
-      notes: [],
+      note: toOrderNoteFromRaw(readBoardNote(dto)),
       slaDeadline: null,
       hasOpenIncidents: dto.hasOpenIncidents,
     }
@@ -202,12 +268,16 @@ export const laundryAdapter = {
   },
 
   toOrderNotes(dto: OrderNotesDataDto): LaundryOrderNote[] {
-    return dto.notes.map((note) => ({
-      id: note.id,
-      content: note.content,
-      createdAt: note.createdAt,
-      author: note.authorName,
-    }))
+    const notes = dto.notes ?? readRaw(dto as unknown as Record<string, unknown>, 'Notes') ?? []
+    if (!Array.isArray(notes)) return []
+
+    return notes
+      .map((note) => toOrderNoteFromRaw(note))
+      .filter((note): note is LaundryOrderNote => note !== null)
+  },
+
+  pickLatestOrderNote(notes: LaundryOrderNote[]): LaundryOrderNote | null {
+    return pickLatestOrderNote(notes)
   },
 
   toBagAssignments(assignments: OrderBagAssignmentDto[]): ItemBagAssignment[] {
@@ -229,6 +299,7 @@ export const laundryAdapter = {
           bagId: assignment.bagNumber,
           status: BagStatus.Processing,
           verified: true,
+          quantity: 0,
         })
       }
     })
@@ -241,6 +312,9 @@ export const laundryAdapter = {
         id: item.laundryItemId,
         name: item.itemName,
         quantity: item.orderedQuantity,
+        orderedQuantity: item.orderedQuantity,
+        assignedQuantity: item.assignedQuantity,
+        remainingQuantity: item.remainingQuantity,
       })),
     }
   },
@@ -249,8 +323,11 @@ export const laundryAdapter = {
     return {
       id: dto.slug,
       slug: dto.slug,
-      type: dto.typeLabel || dto.title,
+      type: dto.type,
+      typeLabel: dto.typeLabel,
+      title: dto.title,
       content: dto.summary,
+      stageLabel: dto.stageLabel,
       createdAt: dto.createdAt,
       author: '',
       stage: incidentStageToWorkflow(dto.stage),
@@ -264,11 +341,17 @@ export const laundryAdapter = {
     return {
       id: dto.slug,
       slug: dto.slug,
-      type: dto.typeLabel || dto.title,
+      type: dto.type,
+      typeLabel: dto.typeLabel,
+      title: dto.title,
       content: dto.description,
+      stageLabel: dto.stageLabel,
       createdAt: dto.createdAt,
       author: dto.reporterName,
       stage: incidentStageToWorkflow(dto.stage),
+      orderNumber: dto.orderNumber,
+      companyName: dto.companyName,
+      orderSlug: dto.orderSlug,
       replies: dto.replies.map(
         (reply): LaundryIncidentReply => ({
           id: reply.id,
@@ -277,6 +360,8 @@ export const laundryAdapter = {
           author: reply.authorName,
         }),
       ),
+      isOpen: dto.replies.length === 0,
+      replyCount: dto.replies.length,
     }
   },
 }

@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react'
 import type { ManagedRole } from '@/domain/entities'
 import { rolesApi } from '@/infrastructure/api/roles.api'
 
-export const useRoleDetails = (roleId: string | undefined) => {
+export const useRoleDetails = (roleSlug: string | undefined) => {
   const [role, setRole] = useState<ManagedRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!roleId) {
+    if (!roleSlug) {
       setRole(null)
       setIsLoading(false)
       return
@@ -21,7 +21,7 @@ export const useRoleDetails = (roleId: string | undefined) => {
       setIsLoading(true)
       setError(null)
 
-      const result = await rolesApi.getById(roleId)
+      const result = await rolesApi.getBySlug(roleSlug)
 
       if (cancelled) return
 
@@ -40,7 +40,7 @@ export const useRoleDetails = (roleId: string | undefined) => {
     return () => {
       cancelled = true
     }
-  }, [roleId])
+  }, [roleSlug])
 
   return { role, isLoading, error }
 }

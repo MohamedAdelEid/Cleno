@@ -18,6 +18,7 @@ export type CompanyUploadField = 'logo' | 'commercialRegistration'
 export interface CompanyFormSubmitPayload {
   values: CompanyFormValues
   uploadedFiles: Partial<Record<CompanyUploadField, UploadedFile>>
+  existingFilePaths?: Partial<Record<CompanyUploadField, string | null>>
 }
 
 export interface CompanyFormProps {
@@ -27,7 +28,10 @@ export interface CompanyFormProps {
   defaultValues?: Partial<CompanyFormValues>
   existingLogoUrl?: string | null
   existingLogoPath?: string | null
+  existingCommercialRegistrationUrl?: string | null
+  existingCommercialRegistrationPath?: string | null
   onExistingLogoRemove?: () => void
+  onExistingCommercialRegistrationRemove?: () => void
   onSubmit: (payload: CompanyFormSubmitPayload) => Promise<boolean | void> | boolean | void
   onSubmittingChange?: (isSubmitting: boolean) => void
 }
@@ -45,7 +49,10 @@ export const CompanyForm = ({
   defaultValues,
   existingLogoUrl,
   existingLogoPath,
+  existingCommercialRegistrationUrl,
+  existingCommercialRegistrationPath,
   onExistingLogoRemove,
+  onExistingCommercialRegistrationRemove,
   onSubmit,
   onSubmittingChange,
 }: CompanyFormProps) => {
@@ -122,16 +129,16 @@ export const CompanyForm = ({
 
   useEffect(() => {
     const subscription = watch((values) => {
-      saveDraft(stripFilesFromValues(values as CompanyFormValues), uploadedFiles as Record<string, UploadedFile>)
+      saveDraft(
+        stripFilesFromValues(values as CompanyFormValues),
+        uploadedFiles as Record<string, UploadedFile>,
+      )
     })
 
     return () => subscription.unsubscribe()
   }, [saveDraft, uploadedFiles, watch])
 
-  const handleUploadedFileChange = (
-    field: CompanyUploadField,
-    file: UploadedFile | null,
-  ) => {
+  const handleUploadedFileChange = (field: CompanyUploadField, file: UploadedFile | null) => {
     setUploadedFiles((current) => {
       const next = { ...current }
       if (file) {
@@ -156,6 +163,10 @@ export const CompanyForm = ({
     const result = await onSubmit({
       values: stripFilesFromValues(values),
       uploadedFiles,
+      existingFilePaths: {
+        logo: existingLogoPath ?? null,
+        commercialRegistration: existingCommercialRegistrationPath ?? null,
+      },
     })
 
     if (result !== false) {
@@ -170,7 +181,10 @@ export const CompanyForm = ({
         mode={mode}
         existingLogoUrl={existingLogoUrl}
         existingLogoPath={existingLogoPath}
+        existingCommercialRegistrationUrl={existingCommercialRegistrationUrl}
+        existingCommercialRegistrationPath={existingCommercialRegistrationPath}
         onExistingLogoRemove={onExistingLogoRemove}
+        onExistingCommercialRegistrationRemove={onExistingCommercialRegistrationRemove}
         uploadedFiles={uploadedFiles}
         onUploadedFileChange={handleUploadedFileChange}
         onUploadError={handleUploadError}

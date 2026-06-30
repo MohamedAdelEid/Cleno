@@ -53,7 +53,7 @@ export const useRoleFormActions = (mode: 'create' | 'edit') => {
     navigate(ROUTES.ROLES.INDEX)
   }
 
-  const handleSubmit = async (values: RoleFormValues) => {
+  const handleSubmit = async (values: RoleFormValues, roleSlug?: string) => {
     if (mode === 'create') {
       const result = await rolesApi.create(roleAdapter.toCreateRequest(values))
 
@@ -74,10 +74,24 @@ export const useRoleFormActions = (mode: 'create' | 'edit') => {
       return
     }
 
-    notify.info({
-      title: t('edit'),
-      description: t('editRoleComingSoon'),
+    if (!roleSlug) return
+
+    const result = await rolesApi.assignPermissions(roleSlug, values.permissionIds)
+
+    if (!result.hasValue) {
+      notify.error({
+        title: t('toastRoleUpdateFailed'),
+        description: result.error?.message ?? t('toastRoleUpdateFailedDesc'),
+      })
+      return
+    }
+
+    notify.success({
+      title: t('toastRoleUpdated'),
+      description: t('toastRoleUpdatedDesc', { name: values.name }),
     })
+
+    navigate(ROUTES.ROLES.INDEX)
   }
 
   return { handleDiscard, handleSubmit }

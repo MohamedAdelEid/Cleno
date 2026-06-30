@@ -1,5 +1,5 @@
 import { Plus, Building } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   CompaniesOverviewSection,
@@ -13,6 +13,8 @@ import { ROUTES } from '@/presentation/routes/routes.constants'
 
 export const CompaniesPage = () => {
   const { t } = useTranslation('companies')
+  const [searchParams] = useSearchParams()
+  const searchFromUrl = searchParams.get('search') ?? ''
   const {
     companies,
     stats,
@@ -27,7 +29,7 @@ export const CompaniesPage = () => {
     paginationState,
     setPaginationState,
     refetch,
-  } = useCompanies()
+  } = useCompanies({ initialKeyword: searchFromUrl })
 
   return (
     <div className="space-y-6">

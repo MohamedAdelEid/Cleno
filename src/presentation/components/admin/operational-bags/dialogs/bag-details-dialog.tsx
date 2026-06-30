@@ -1,16 +1,19 @@
 import { format, formatDistanceToNow } from 'date-fns'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import type { OperationalBag } from '@/domain/entities'
-import {
-  OperationalBagStatus,
-  OperationalBagSystemStatus,
-} from '@/domain/enums'
+import { OperationalBagStatus, OperationalBagSystemStatus } from '@/domain/enums'
+import { DataTableCellLink } from '@/presentation/components/dashboard/data-table'
 import { AppDialog } from '@/presentation/components/feedback/app-dialog'
-import { BagOperationalStatusBadge, BagSystemStatusBadge } from '@/presentation/components/admin/operational-bags/shared'
+import {
+  BagOperationalStatusBadge,
+  BagSystemStatusBadge,
+} from '@/presentation/components/admin/operational-bags/shared'
 import { Button } from '@/presentation/components/ui/button'
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import { ROUTES } from '@/presentation/routes/routes.constants'
+
+import { BagCompanyCell } from '@/presentation/components/admin/operational-bags/list/bag-company-cell'
 
 interface BagDetailsDialogProps {
   open: boolean
@@ -26,20 +29,14 @@ const DetailRow = ({ label, children }: { label: string; children: React.ReactNo
   </div>
 )
 
-export const BagDetailsDialog = ({
-  open,
-  onOpenChange,
-  bag,
-  onEdit,
-}: BagDetailsDialogProps) => {
+export const BagDetailsDialog = ({ open, onOpenChange, bag, onEdit }: BagDetailsDialogProps) => {
   const { t } = useTranslation('operationalBags')
+  const navigate = useNavigate()
 
   if (!bag) return null
 
   const systemLabel =
-    bag.systemStatus === OperationalBagSystemStatus.Active
-      ? t('systemActive')
-      : t('systemInactive')
+    bag.systemStatus === OperationalBagSystemStatus.Active ? t('systemActive') : t('systemInactive')
 
   const operationalLabels: Record<OperationalBagStatus, string> = {
     [OperationalBagStatus.Ready]: t('opReady'),
@@ -78,6 +75,16 @@ export const BagDetailsDialog = ({
         <DetailRow label={t('colBagId')}>
           <span className="font-mono font-semibold">{bag.bagId}</span>
         </DetailRow>
+        <DetailRow label={t('formWeight')}>
+          {bag.weight != null ? (
+            `${bag.weight} kg`
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </DetailRow>
+        <DetailRow label={t('formNotes')}>
+          {bag.notes ? bag.notes : <span className="text-muted-foreground">—</span>}
+        </DetailRow>
         <DetailRow label={t('colSystemStatus')}>
           <BagSystemStatusBadge status={bag.systemStatus} label={systemLabel} />
         </DetailRow>
@@ -89,21 +96,22 @@ export const BagDetailsDialog = ({
         </DetailRow>
         <DetailRow label={t('colCurrentOrder')}>
           {bag.currentOrderNumber ? (
-            <Link to={ROUTES.ORDERS.INDEX} className="font-medium text-primary hover:underline">
+            <DataTableCellLink
+              className="font-medium"
+              onClick={() => navigate(ROUTES.ORDERS.withSearch(bag.currentOrderNumber!))}
+            >
               {bag.currentOrderNumber}
-            </Link>
+            </DataTableCellLink>
           ) : (
             <span className="text-muted-foreground">{t('noOrder')}</span>
           )}
         </DetailRow>
         <DetailRow label={t('colCustomer')}>
-          {bag.customerName && bag.customerSlug ? (
-            <Link
-              to={ROUTES.COMPANIES.DETAILS.replace(':companySlug', bag.customerSlug)}
-              className="font-medium text-primary hover:underline"
-            >
-              {bag.customerName}
-            </Link>
+          {bag.company ? (
+            <BagCompanyCell
+              company={bag.company}
+              onClick={() => navigate(ROUTES.COMPANIES.withSearch(bag.company!.name))}
+            />
           ) : (
             <span className="text-muted-foreground">{t('noCustomer')}</span>
           )}
@@ -117,6 +125,32 @@ export const BagDetailsDialog = ({
           </div>
         </DetailRow>
       </div>
+
+      {bag.assignmentHistory.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-border/60 bg-background px-4 py-3">
+          <h3 className="text-sm font-semibold text-foreground">{t('assignmentHistory')}</h3>
+          <div className="mt-2 divide-y divide-border/50">
+            {bag.assignmentHistory.map((item) => (
+              <div key={`${item.orderId}-${item.assignedAt ?? ''}`} className="py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <DataTableCellLink
+                    className="text-sm font-medium"
+                    onClick={() => navigate(ROUTES.ORDERS.withSearch(item.orderNumber))}
+                  >
+                    {item.orderNumber}
+                  </DataTableCellLink>
+                  {item.assignedAt ? (
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(item.assignedAt), 'MMM d, yyyy')}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{item.companyName}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </AppDialog>
   )
 }

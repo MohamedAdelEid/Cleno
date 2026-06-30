@@ -5,9 +5,10 @@ import type {
   RolesAdminAllDataDto,
   RolesAdminAllParams,
   RoleAvailableUsersParams,
+  RolePermissionsDto,
 } from '@/application/dtos/roles/roles-admin.dto'
 import { roleAdapter } from '@/application/adapters/role.adapter'
-import type { ManagedRole, RoleMember } from '@/domain/entities'
+import type { ManagedRole, PermissionModuleGroup, RoleMember } from '@/domain/entities'
 import type { ApiResult, RolesAdminList } from '@/domain/types'
 import { API_ENDPOINTS } from './endpoints'
 import { httpClient } from './http-client'
@@ -48,6 +49,28 @@ export const rolesApi = {
     }
   },
 
+  async getAssignedPermissions(roleSlug: string): Promise<ApiResult<PermissionModuleGroup[]>> {
+    const result = await httpClient.get<RolePermissionsDto>({
+      url: API_ENDPOINTS.roles.permissions(roleSlug),
+    })
+
+    if (!result.hasValue || !result.data) {
+      return { ...result, data: null }
+    }
+
+    return {
+      ...result,
+      data: roleAdapter.toAssignedPermissionGroups(result.data),
+    }
+  },
+
+  assignPermissions(roleSlug: string, permissionIds: string[]): Promise<ApiResult<boolean>> {
+    return httpClient.post<boolean>({
+      url: API_ENDPOINTS.roles.permissions(roleSlug),
+      data: permissionIds,
+    })
+  },
+
   setFeatured(roleIds: string[]): Promise<ApiResult<boolean>> {
     return httpClient.post<boolean>({
       url: API_ENDPOINTS.roles.setFeatured,
@@ -69,9 +92,9 @@ export const rolesApi = {
     })
   },
 
-  async getRoleUsers(roleId: string): Promise<ApiResult<RoleMember[]>> {
+  async getRoleUsers(roleSlug: string): Promise<ApiResult<RoleMember[]>> {
     const result = await httpClient.get<RoleUserDto[]>({
-      url: API_ENDPOINTS.roles.users(roleId),
+      url: API_ENDPOINTS.roles.users(roleSlug),
     })
 
     if (!result.hasValue || !result.data) {
@@ -85,11 +108,11 @@ export const rolesApi = {
   },
 
   async getAvailableUsers(
-    roleId: string,
+    roleSlug: string,
     params: RoleAvailableUsersParams = {},
   ): Promise<ApiResult<RoleMember[]>> {
     const result = await httpClient.get<RoleUserDto[]>({
-      url: API_ENDPOINTS.roles.availableUsers(roleId),
+      url: API_ENDPOINTS.roles.availableUsers(roleSlug),
       params: roleAdapter.toAvailableUsersParams(params),
     })
 
@@ -103,9 +126,9 @@ export const rolesApi = {
     }
   },
 
-  async getById(roleId: string): Promise<ApiResult<ManagedRole | null>> {
+  async getBySlug(roleSlug: string): Promise<ApiResult<ManagedRole | null>> {
     const byIdResult = await httpClient.get<RoleAdminItemDto>({
-      url: API_ENDPOINTS.roles.byId(roleId),
+      url: API_ENDPOINTS.roles.bySlug(roleSlug),
     })
 
     if (byIdResult.hasValue && byIdResult.data) {
@@ -122,8 +145,10 @@ export const rolesApi = {
     }
 
     const role =
-      listResult.data.items.find((item) => item.id === roleId) ??
-      listResult.data.featuredRoles.find((item) => item.id === roleId) ??
+      listResult.data.items.find((item) => item.slug === roleSlug || item.id === roleSlug) ??
+      listResult.data.featuredRoles.find(
+        (item) => item.slug === roleSlug || item.id === roleSlug,
+      ) ??
       null
 
     return {
@@ -131,5 +156,9 @@ export const rolesApi = {
       data: role,
       hasValue: !!role,
     }
+  },
+
+  getById(roleId: string): Promise<ApiResult<ManagedRole | null>> {
+    return this.getBySlug(roleId)
   },
 }

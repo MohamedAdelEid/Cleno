@@ -2,11 +2,21 @@ import type { ManagedCompany } from '@/domain/entities'
 import { CompanyAccountStatus } from '@/domain/enums'
 
 const withCompanyDefaults = (
-  company: Omit<ManagedCompany, 'slug' | 'commercialRegistration' | 'branches'> &
-    Partial<Pick<ManagedCompany, 'slug' | 'commercialRegistration' | 'branches'>>,
+  company: Omit<
+    ManagedCompany,
+    'slug' | 'logoPath' | 'commercialRegistration' | 'commercialRegistrationFile' | 'branches'
+  > &
+    Partial<
+      Pick<
+        ManagedCompany,
+        'slug' | 'logoPath' | 'commercialRegistration' | 'commercialRegistrationFile' | 'branches'
+      >
+    >,
 ): ManagedCompany => ({
   slug: company.slug ?? '',
-  commercialRegistration: company.commercialRegistration ?? '',
+  logoPath: company.logoPath ?? null,
+  commercialRegistration: company.commercialRegistration ?? null,
+  commercialRegistrationFile: company.commercialRegistrationFile ?? null,
   branches: company.branches ?? [],
   ...company,
 })

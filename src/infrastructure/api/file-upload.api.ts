@@ -64,10 +64,7 @@ export const fileUploadApi = {
   async uploadMultiple(
     files: File[],
     folder: string,
-  ): Promise<
-    | { success: true; data: UploadedFile[] }
-    | { success: false; message: string }
-  > {
+  ): Promise<{ success: true; data: UploadedFile[] } | { success: false; message: string }> {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
     formData.append('folder', folder)
@@ -107,6 +104,25 @@ export const fileUploadApi = {
     })
 
     return parseDeleteResponse(result.data, result.error?.message)
+  },
+
+  async download(
+    filePath: string,
+  ): Promise<{ success: true; data: Blob } | { success: false; message: string }> {
+    const result = await httpClient.get<Blob>({
+      url: API_ENDPOINTS.fileUpload.download,
+      params: { filePath },
+      responseType: 'blob',
+    })
+
+    if (result.hasValue && result.data) {
+      return { success: true, data: result.data }
+    }
+
+    return {
+      success: false,
+      message: result.error?.message ?? 'Download failed',
+    }
   },
 
   async deleteFolder(

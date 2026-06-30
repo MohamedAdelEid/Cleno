@@ -38,7 +38,7 @@ export interface AssignUsersDialogLabels {
 interface AssignUsersDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  roleId: string | null
+  roleSlug: string | null
   roleName: string
   labels: AssignUsersDialogLabels
   onAssign?: (userIds: string[]) => void | Promise<void>
@@ -47,7 +47,7 @@ interface AssignUsersDialogProps {
 export const AssignUsersDialog = ({
   open,
   onOpenChange,
-  roleId,
+  roleSlug,
   roleName,
   labels,
   onAssign,
@@ -71,14 +71,14 @@ export const AssignUsersDialog = ({
       setPageNumber(1)
       setUsers([])
     }
-  }, [open, debouncedQuery, roleId])
+  }, [open, debouncedQuery, roleSlug])
 
   const fetchUsers = useCallback(
     async (page: number, append: boolean) => {
-      if (!roleId) return
+      if (!roleSlug) return
 
       setIsLoading(true)
-      const result = await rolesApi.getAvailableUsers(roleId, {
+      const result = await rolesApi.getAvailableUsers(roleSlug, {
         keyword: debouncedQuery || undefined,
         pageNumber: page,
         pageSize: PAGE_SIZE,
@@ -88,9 +88,7 @@ export const AssignUsersDialog = ({
         setUsers((current) => (append ? [...current, ...result.data!] : result.data!))
         const pagination = result.pagination
         setHasMore(
-          pagination
-            ? pagination.page < pagination.totalPages
-            : result.data.length >= PAGE_SIZE,
+          pagination ? pagination.page < pagination.totalPages : result.data.length >= PAGE_SIZE,
         )
       } else if (!append) {
         setUsers([])
@@ -99,19 +97,17 @@ export const AssignUsersDialog = ({
 
       setIsLoading(false)
     },
-    [debouncedQuery, roleId],
+    [debouncedQuery, roleSlug],
   )
 
   useEffect(() => {
-    if (!open || !roleId) return
+    if (!open || !roleSlug) return
     void fetchUsers(1, false)
-  }, [open, roleId, debouncedQuery, fetchUsers])
+  }, [open, roleSlug, debouncedQuery, fetchUsers])
 
   const toggleUser = (userId: string) => {
     setSelectedIds((current) =>
-      current.includes(userId)
-        ? current.filter((id) => id !== userId)
-        : [...current, userId],
+      current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId],
     )
   }
 
@@ -142,10 +138,7 @@ export const AssignUsersDialog = ({
     void fetchUsers(nextPage, true)
   }
 
-  const emptyState = useMemo(
-    () => !isLoading && users.length === 0,
-    [isLoading, users.length],
-  )
+  const emptyState = useMemo(() => !isLoading && users.length === 0, [isLoading, users.length])
 
   return (
     <AppDialog
@@ -235,9 +228,7 @@ export const AssignUsersDialog = ({
           </Button>
         ) : null}
 
-        {isLoading && users.length > 0 ? (
-          <Skeleton className="h-10 w-full rounded-xl" />
-        ) : null}
+        {isLoading && users.length > 0 ? <Skeleton className="h-10 w-full rounded-xl" /> : null}
       </div>
     </AppDialog>
   )

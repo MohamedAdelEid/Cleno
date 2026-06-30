@@ -1,11 +1,4 @@
 import { arSA, enUS } from 'date-fns/locale'
-import {
-  endOfWeek,
-  isSameDay,
-  isWithinInterval,
-  startOfWeek,
-  subDays,
-} from 'date-fns'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarDays, List, MoreHorizontal, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -19,7 +12,6 @@ import { cn } from '@/presentation/utils'
 import { ActivityTimelineItem } from './activity-timeline-item'
 import { ActivityTimelineSkeleton } from './activity-timeline-skeleton'
 import { ScrollHint } from './scroll-hint'
-import { latestUpdatesDummyData } from './latest-updates.data'
 import type { ActivityItem, UpdatesFilter } from './latest-updates.types'
 
 const CARD_EASE = [0.25, 0.1, 0.25, 1] as const
@@ -35,47 +27,38 @@ const filterButtonClass = (active: boolean) =>
       : 'border-border/80 bg-background text-muted-foreground hover:border-border hover:text-foreground',
   )
 
-const matchesFilter = (
-  item: ActivityItem,
-  filter: UpdatesFilter,
-  customDate: Date | undefined,
-  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6,
-): boolean => {
-  const now = new Date()
-
-  switch (filter) {
-    case 'today':
-      return isSameDay(item.occurredAt, now)
-    case 'yesterday':
-      return isSameDay(item.occurredAt, subDays(now, 1))
-    case 'this-week':
-      return isWithinInterval(item.occurredAt, {
-        start: startOfWeek(now, { weekStartsOn }),
-        end: endOfWeek(now, { weekStartsOn }),
-      })
-    case 'custom':
-      return customDate ? isSameDay(item.occurredAt, customDate) : false
-    default:
-      return true
-  }
-}
-
 interface LatestUpdatesCardProps {
   index?: number
   className?: string
+  items: ActivityItem[]
+  totalCount: number
+  filter: UpdatesFilter
+  onFilterChange: (filter: UpdatesFilter) => void
+  customDate: Date | undefined
+  onCustomDateChange: (date: Date | undefined) => void
+  searchQuery: string
+  onSearchQueryChange: (search: string) => void
+  isLoading?: boolean
 }
 
-export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardProps) => {
+export const LatestUpdatesCard = ({
+  index = 3,
+  className,
+  items,
+  totalCount,
+  filter,
+  onFilterChange,
+  customDate,
+  onCustomDateChange,
+  searchQuery,
+  onSearchQueryChange,
+  isLoading = false,
+}: LatestUpdatesCardProps) => {
   const { t } = useTranslation('dashboard')
   const language = useLanguageStore((state) => state.language)
   const locale = language === Language.Arabic ? arSA : enUS
-  const weekStartsOn = language === Language.Arabic ? 6 : 1
 
-  const [filter, setFilter] = useState<UpdatesFilter>('today')
-  const [customDate, setCustomDate] = useState<Date | undefined>()
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
   const [canScroll, setCanScroll] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -88,27 +71,6 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
   }, [])
 
   useEffect(() => {
-    setIsLoading(true)
-    const timer = window.setTimeout(() => setIsLoading(false), 480)
-    return () => window.clearTimeout(timer)
-  }, [filter, customDate, searchQuery])
-
-  const filteredItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-
-    return latestUpdatesDummyData.filter((item) => {
-      const matchesDate = matchesFilter(item, filter, customDate, weekStartsOn)
-      if (!matchesDate) return false
-      if (!query) return true
-
-      return (
-        item.title.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query)
-      )
-    })
-  }, [filter, customDate, searchQuery, weekStartsOn])
-
-  useEffect(() => {
     if (isLoading) return
     checkScroll()
     const el = scrollRef.current
@@ -117,7 +79,7 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
     const observer = new ResizeObserver(checkScroll)
     observer.observe(el)
     return () => observer.disconnect()
-  }, [isLoading, filteredItems.length, checkScroll])
+  }, [isLoading, items.length, checkScroll])
 
   const summaryLabel = useMemo(() => {
     if (filter === 'custom' && customDate) {
@@ -145,21 +107,23 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
     : null
 
   const handleFilterChange = (next: UpdatesFilter) => {
-    setFilter(next)
-    if (next !== 'custom') setCustomDate(undefined)
+    onFilterChange(next)
+    if (next !== 'custom') onCustomDateChange(undefined)
   }
 
   const handleCustomDateSelect = (date: Date | undefined) => {
     if (!date) return
-    setCustomDate(date)
-    setFilter('custom')
+    onCustomDateChange(date)
+    onFilterChange('custom')
     setCalendarOpen(false)
   }
 
   const clearCustomDate = () => {
-    setCustomDate(undefined)
-    setFilter('today')
+    onCustomDateChange(undefined)
+    onFilterChange('today')
   }
+
+  const displayCount = isLoading ? 0 : totalCount
 
   return (
     <motion.article
@@ -255,7 +219,7 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
 
           <SearchInput
             value={searchQuery}
-            onValueChange={setSearchQuery}
+            onValueChange={onSearchQueryChange}
             placeholder={t('searchActivities')}
           />
 
@@ -266,7 +230,7 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
             transition={{ duration: 0.25, ease: CARD_EASE }}
             className="text-sm text-muted-foreground"
           >
-            <span className="font-semibold text-foreground">{filteredItems.length}</span>{' '}
+            <span className="font-semibold text-foreground">{displayCount}</span>{' '}
             {summaryLabel}
           </motion.p>
         </div>
@@ -291,7 +255,7 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
           >
             {isLoading ? (
               <ActivityTimelineSkeleton />
-            ) : filteredItems.length === 0 ? (
+            ) : items.length === 0 ? (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -306,7 +270,7 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
                   className="absolute start-4 top-4 bottom-4 w-px border-s border-dashed border-border/80"
                 />
                 <AnimatePresence mode="popLayout" initial={false}>
-                  {filteredItems.map((item, itemIndex) => (
+                  {items.map((item, itemIndex) => (
                     <ActivityTimelineItem key={item.id} item={item} index={itemIndex} />
                   ))}
                 </AnimatePresence>
@@ -315,7 +279,7 @@ export const LatestUpdatesCard = ({ index = 3, className }: LatestUpdatesCardPro
           </div>
 
           <AnimatePresence>
-            {!isLoading && filteredItems.length > 0 && canScroll && <ScrollHint />}
+            {!isLoading && items.length > 0 && canScroll && <ScrollHint />}
           </AnimatePresence>
         </div>
       </div>

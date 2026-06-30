@@ -2,14 +2,11 @@ import { Plus } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { PERMISSION_GROUPS } from '@/domain/constants/permission-groups'
+import type { PermissionModuleGroup } from '@/domain/entities'
 import type { Permission } from '@/domain/types/permission.type'
 import { AppDialog } from '@/presentation/components/feedback/app-dialog'
 import { Button } from '@/presentation/components/ui/button'
-import {
-  getGroupLabel,
-  getPermissionLabel,
-  type PermissionLabels,
-} from './permission-labels'
+import { getGroupLabel, getPermissionLabel, type PermissionLabels } from './permission-labels'
 import { PermissionGroup } from './permission-group'
 
 export type PermissionsDialogLabels = PermissionLabels & {
@@ -22,6 +19,8 @@ export interface PermissionsDialogProps {
   title: string
   description?: string
   permissions: Permission[]
+  groups?: PermissionModuleGroup[]
+  isLoading?: boolean
   labels: PermissionsDialogLabels
   onAddPermission?: () => void
 }
@@ -32,6 +31,8 @@ export const PermissionsDialog = ({
   title,
   description,
   permissions,
+  groups,
+  isLoading = false,
   labels,
   onAddPermission,
 }: PermissionsDialogProps) => {
@@ -63,25 +64,50 @@ export const PermissionsDialog = ({
         </Button>
       }
     >
-      {PERMISSION_GROUPS.map((group, index) => (
-        <PermissionGroup
-          key={group.key}
-          title={getGroupLabel(group.key, labels)}
-          subtitle={labels.permissionSettingsFor.replace(
-            '{{group}}',
-            getGroupLabel(group.key, labels),
-          )}
-          items={group.permissions.map((permission) => ({
-            id: permission,
-            label: permissionLabels[permission],
-          }))}
-          selectedIds={permissions}
-          selectAllLabel={labels.selectAll}
-          emptyLabel={labels.groupEmpty}
-          defaultOpen={index === 0}
-          readOnly
-        />
-      ))}
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-16 rounded-lg bg-muted/40" />
+          ))}
+        </div>
+      ) : groups?.length ? (
+        groups.map((group, index) => (
+          <PermissionGroup
+            key={group.module}
+            title={group.module}
+            subtitle={labels.permissionSettingsFor.replace('{{group}}', group.module)}
+            items={group.permissions.map((permission) => ({
+              id: permission.id,
+              label: permission.name,
+            }))}
+            selectedIds={group.permissions.map((permission) => permission.id)}
+            selectAllLabel={labels.selectAll}
+            emptyLabel={labels.groupEmpty}
+            defaultOpen={index === 0}
+            readOnly
+          />
+        ))
+      ) : (
+        PERMISSION_GROUPS.map((group, index) => (
+          <PermissionGroup
+            key={group.key}
+            title={getGroupLabel(group.key, labels)}
+            subtitle={labels.permissionSettingsFor.replace(
+              '{{group}}',
+              getGroupLabel(group.key, labels),
+            )}
+            items={group.permissions.map((permission) => ({
+              id: permission,
+              label: permissionLabels[permission],
+            }))}
+            selectedIds={permissions}
+            selectAllLabel={labels.selectAll}
+            emptyLabel={labels.groupEmpty}
+            defaultOpen={index === 0}
+            readOnly
+          />
+        ))
+      )}
     </AppDialog>
   )
 }

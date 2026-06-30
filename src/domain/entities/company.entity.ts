@@ -1,4 +1,5 @@
 import type { CompanyAccountStatus } from '@/domain/enums'
+import type { RemoteFileReference } from '@/domain/types/company-admin.type'
 
 export interface CompanyBranch {
   id: string
@@ -21,9 +22,11 @@ export interface ManagedCompany {
   type: string
   email: string
   logoUrl: string | null
+  logoPath: string | null
   responsible: CompanyResponsible
   phone: string
-  commercialRegistration: string
+  commercialRegistration: string | null
+  commercialRegistrationFile: RemoteFileReference | null
   branchesCount: number
   branches: CompanyBranch[]
   activeOrders: number

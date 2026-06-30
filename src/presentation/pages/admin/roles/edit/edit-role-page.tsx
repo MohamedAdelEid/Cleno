@@ -6,6 +6,7 @@ import {
   useRoleFormLabels,
 } from '@/presentation/components/admin/roles/hooks/use-role-form'
 import { useRoleDetails } from '@/presentation/components/admin/roles/hooks/use-role-details'
+import { useRoleAssignedPermissions } from '@/presentation/components/admin/roles/hooks/use-role-assigned-permissions'
 import { useRolePermissions } from '@/presentation/components/admin/roles/hooks/use-role-permissions'
 import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { ROUTES } from '@/presentation/routes/routes.constants'
@@ -22,13 +23,18 @@ const EditRoleSkeleton = () => (
 )
 
 export const EditRolePage = () => {
-  const { roleId } = useParams<{ roleId: string }>()
+  const { roleId: roleSlug } = useParams<{ roleId: string }>()
   const labels = useRoleFormLabels()
   const { handleDiscard, handleSubmit } = useRoleFormActions('edit')
   const { groups, isLoading: permissionsLoading, error: permissionsError } = useRolePermissions()
-  const { role, isLoading: roleLoading } = useRoleDetails(roleId)
+  const { role, isLoading: roleLoading } = useRoleDetails(roleSlug)
+  const {
+    permissionIds,
+    isLoading: assignedPermissionsLoading,
+    error: assignedPermissionsError,
+  } = useRoleAssignedPermissions(roleSlug)
 
-  if (roleLoading || permissionsLoading) {
+  if (roleLoading || permissionsLoading || assignedPermissionsLoading) {
     return <EditRoleSkeleton />
   }
 
@@ -42,15 +48,15 @@ export const EditRolePage = () => {
       labels={labels}
       permissionGroups={groups}
       permissionsLoading={permissionsLoading}
-      permissionsLoadError={permissionsError}
       defaultValues={{
         name: role.name,
         description: role.description,
         status: role.status,
-        permissionIds: [],
+        permissionIds,
       }}
       onDiscard={handleDiscard}
-      onSubmit={handleSubmit}
+      onSubmit={(values) => handleSubmit(values, role.slug)}
+      permissionsLoadError={permissionsError ?? assignedPermissionsError}
     />
   )
 }

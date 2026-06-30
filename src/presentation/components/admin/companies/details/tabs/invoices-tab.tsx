@@ -21,6 +21,7 @@ interface InvoicesTabProps {
   branches: CompanyDetailsBranch[]
   branchFilter: string
   search: string
+  isLoading?: boolean
   onBranchFilterChange: (slug: string) => void
   onSearchChange: (value: string) => void
 }
@@ -37,6 +38,7 @@ export const InvoicesTab = ({
   branches,
   branchFilter,
   search,
+  isLoading = false,
   onBranchFilterChange,
   onSearchChange,
 }: InvoicesTabProps) => {
@@ -113,7 +115,12 @@ export const InvoicesTab = ({
         ) : undefined
       }
     >
-      {filteredInvoices.length === 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <FileText className="size-10 animate-pulse text-muted-foreground/40" strokeWidth={1.5} />
+          <p className="mt-3 text-sm text-muted-foreground">{t('detailsLoadingInvoices')}</p>
+        </div>
+      ) : filteredInvoices.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
           <FileText className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
           <p className="mt-3 text-sm text-muted-foreground">{t('detailsNoInvoices')}</p>

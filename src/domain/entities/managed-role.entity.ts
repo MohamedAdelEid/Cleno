@@ -12,6 +12,7 @@ export interface RoleMember {
 
 export interface ManagedRole {
   id: string
+  slug: string
   name: string
   description: string
   permissions: Permission[]

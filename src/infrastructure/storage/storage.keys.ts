@@ -3,6 +3,7 @@ export const STORAGE_KEYS = {
   authState: 'cleno.auth.state',
   theme: 'cleno.theme',
   language: 'cleno.language',
+  settings: 'cleno.settings',
   formDraft: (key: string) => `cleno.draft.${key}`,
 } as const
 

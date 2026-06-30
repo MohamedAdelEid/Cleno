@@ -135,4 +135,6 @@ export const roles = {
   permissionsLoadError: 'Unable to load permissions. Please try again.',
   toastRoleUpdated: 'Role updated',
   toastRoleUpdatedDesc: '"{{name}}" has been updated.',
+  toastRoleUpdateFailed: 'Could not update role',
+  toastRoleUpdateFailedDesc: 'Something went wrong while updating the role.',
 } as const

@@ -1,17 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { formatDistanceToNow } from 'date-fns'
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 
 import type { OperationalBag } from '@/domain/entities'
+import { DataTableCellLink, DataTableColumnHeader } from '@/presentation/components/dashboard/data-table'
 import {
   OperationalBagStatus,
   OperationalBagSystemStatus,
   type OperationalBagStatus as OperationalBagStatusType,
   type OperationalBagSystemStatus as OperationalBagSystemStatusType,
 } from '@/domain/enums'
-import { DataTableColumnHeader } from '@/presentation/components/dashboard/data-table'
 import { BagOperationalStatusBadge, BagSystemStatusBadge } from '@/presentation/components/admin/operational-bags/shared'
+import { BagCompanyCell } from '@/presentation/components/admin/operational-bags/list/bag-company-cell'
 import { Button } from '@/presentation/components/ui/button'
 import {
   DropdownMenu,
@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/presentation/components/ui/dropdown-menu'
-import { ROUTES } from '@/presentation/routes/routes.constants'
 
 export interface BagsColumnLabels {
   bagId: string
@@ -81,6 +80,8 @@ export const createBagsColumns = (
     onViewClick: (bag: OperationalBag) => void
     onEditClick: (bag: OperationalBag) => void
     onDeleteClick: (bag: OperationalBag) => void
+    onOrderClick?: (bag: OperationalBag) => void
+    onCompanyClick?: (bag: OperationalBag) => void
   },
 ): ColumnDef<OperationalBag>[] => [
   {
@@ -109,37 +110,31 @@ export const createBagsColumns = (
       }
 
       return (
-        <Link
-          to={ROUTES.ORDERS.INDEX}
-          className="text-sm font-medium text-primary hover:underline"
+        <DataTableCellLink
+          className="font-mono text-sm"
+          onClick={() => options.onOrderClick?.(row.original)}
         >
           {orderNumber}
-        </Link>
+        </DataTableCellLink>
       )
     },
   },
   {
     id: 'customer',
-    accessorFn: (row) => row.customerName ?? '',
+    accessorFn: (row) => row.company?.name ?? '',
     header: ({ column }) => <DataTableColumnHeader column={column} title={labels.customer} />,
     cell: ({ row }) => {
-      const { customerName, customerSlug } = row.original
-      if (!customerName) {
+      const { company } = row.original
+      if (!company) {
         return <span className="text-sm text-muted-foreground/50">{labels.noCustomer}</span>
       }
 
-      if (customerSlug) {
-        return (
-          <Link
-            to={ROUTES.COMPANIES.DETAILS.replace(':companySlug', customerSlug)}
-            className="text-sm font-medium text-foreground hover:text-primary hover:underline"
-          >
-            {customerName}
-          </Link>
-        )
-      }
-
-      return <span className="text-sm text-foreground">{customerName}</span>
+      return (
+        <BagCompanyCell
+          company={company}
+          onClick={() => options.onCompanyClick?.(row.original)}
+        />
+      )
     },
   },
   {

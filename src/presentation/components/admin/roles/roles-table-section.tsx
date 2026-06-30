@@ -4,8 +4,8 @@ import { Star, Trash2 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import type { ManagedRole } from '@/domain/entities'
-import { RoleStatus } from '@/domain/enums'
+import type { ManagedRole, PermissionModuleGroup } from '@/domain/entities'
+import type { RoleStatus } from '@/domain/enums'
 import { rolesApi } from '@/infrastructure/api/roles.api'
 import { notify } from '@/infrastructure/libs/toast/toast'
 import {
@@ -21,7 +21,7 @@ import { Button } from '@/presentation/components/ui/button'
 import { Skeleton } from '@/presentation/components/ui/skeleton'
 import { useDirection } from '@/presentation/hooks/use-direction'
 import { useTranslation } from '@/presentation/hooks/use-translation'
-import { buildRoleEditPath } from '@/presentation/routes/role.routes'
+import { ROUTES } from '@/presentation/routes/routes.constants'
 import { AssignUsersDialog } from './assign-users-dialog'
 import { FeaturedRolesSection } from './featured-roles-section'
 import { useRolesTableLabels } from './hooks/use-roles-table-labels'
@@ -79,6 +79,8 @@ export const RolesTableSection = ({
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [permissionsRole, setPermissionsRole] = useState<ManagedRole | null>(null)
+  const [permissionGroups, setPermissionGroups] = useState<PermissionModuleGroup[]>([])
+  const [isPermissionsLoading, setIsPermissionsLoading] = useState(false)
   const [usersRole, setUsersRole] = useState<ManagedRole | null>(null)
   const [usersRoleMembers, setUsersRoleMembers] = useState<ManagedRole['users']>([])
   const [isUsersLoading, setIsUsersLoading] = useState(false)
@@ -88,7 +90,7 @@ export const RolesTableSection = ({
 
   const handleEditRole = useCallback(
     (role: ManagedRole) => {
-      navigate(buildRoleEditPath(role.id))
+      navigate(ROUTES.ROLES.edit(role.slug))
     },
     [navigate],
   )
@@ -96,10 +98,7 @@ export const RolesTableSection = ({
   const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id])
   const selectedCount = selectedIds.length
 
-  const featuredRoleIds = useMemo(
-    () => featuredRoles.map((role) => role.id),
-    [featuredRoles],
-  )
+  const featuredRoleIds = useMemo(() => featuredRoles.map((role) => role.id), [featuredRoles])
 
   const featuredBulk = useMemo(
     () => getFeaturedBulkState(selectedIds, featuredRoleIds),
@@ -110,7 +109,7 @@ export const RolesTableSection = ({
 
   const fetchRoleUsers = useCallback(async (role: ManagedRole) => {
     setIsUsersLoading(true)
-    const result = await rolesApi.getRoleUsers(role.id)
+    const result = await rolesApi.getRoleUsers(role.slug)
 
     if (result.hasValue && result.data) {
       setUsersRoleMembers(result.data)
@@ -132,6 +131,28 @@ export const RolesTableSection = ({
     [fetchRoleUsers],
   )
 
+  const handlePermissionsClick = useCallback(
+    async (role: ManagedRole) => {
+      setPermissionsRole(role)
+      setPermissionGroups([])
+      setIsPermissionsLoading(true)
+
+      const result = await rolesApi.getAssignedPermissions(role.slug)
+
+      if (result.hasValue && result.data) {
+        setPermissionGroups(result.data)
+      } else {
+        notify.error({
+          title: t('viewPermissions'),
+          description: result.error?.message ?? t('permissionsLoadError'),
+        })
+      }
+
+      setIsPermissionsLoading(false)
+    },
+    [t],
+  )
+
   const handleFeaturedBulkAction = async () => {
     if (featuredBulk.disabled || !featuredBulk.action) return
 
@@ -140,9 +161,7 @@ export const RolesTableSection = ({
     if (result.hasValue) {
       notify.success({
         title:
-          featuredBulk.action === 'remove'
-            ? t('toastFeaturedRemoved')
-            : t('toastFeaturedUpdated'),
+          featuredBulk.action === 'remove' ? t('toastFeaturedRemoved') : t('toastFeaturedUpdated'),
         description:
           featuredBulk.action === 'remove'
             ? t('toastFeaturedRemovedDesc')
@@ -201,7 +220,7 @@ export const RolesTableSection = ({
         isRtl,
         onPermissionsClick: (role) => {
           if (role.permissionsCount > 0) {
-            setPermissionsRole(role)
+            void handlePermissionsClick(role)
           } else {
             notify.info({
               title: labels.featured.viewPermissions,
@@ -214,7 +233,15 @@ export const RolesTableSection = ({
         onEditClick: handleEditRole,
         onDeleteClick: (role) => setDeleteTarget(role),
       }),
-    [isRtl, labels.columns, labels.featured.viewPermissions, t, handleEditRole, handleUsersClick],
+    [
+      isRtl,
+      labels.columns,
+      labels.featured.viewPermissions,
+      t,
+      handleEditRole,
+      handlePermissionsClick,
+      handleUsersClick,
+    ],
   )
 
   const featuredBulkLabel =
@@ -229,7 +256,7 @@ export const RolesTableSection = ({
         onManageFeatured={() => setFeaturedDialogOpen(true)}
         onPermissionsClick={(role) => {
           if (role.permissionsCount > 0) {
-            setPermissionsRole(role)
+            void handlePermissionsClick(role)
           } else {
             handleEditRole(role)
           }
@@ -268,11 +295,7 @@ export const RolesTableSection = ({
                       {featuredBulkLabel}
                     </Button>
 
-                    <Button
-                      variant="destructive"
-                      size="xs"
-                      onClick={() => setDeleteTarget('bulk')}
-                    >
+                    <Button variant="destructive" size="xs" onClick={() => setDeleteTarget('bulk')}>
                       <Trash2 />
                       {t('deleteSelected')}
                     </Button>
@@ -296,9 +319,7 @@ export const RolesTableSection = ({
             onPageChange={(pageIndex) =>
               onPaginationStateChange((current) => ({ ...current, pageIndex }))
             }
-            onPageSizeChange={(pageSize) =>
-              onPaginationStateChange({ pageIndex: 0, pageSize })
-            }
+            onPageSizeChange={(pageSize) => onPaginationStateChange({ pageIndex: 0, pageSize })}
             labels={labels.pagination}
           />
         }
@@ -327,6 +348,8 @@ export const RolesTableSection = ({
         title={permissionsRole?.name ?? ''}
         description={t('permissionsDialogDescription')}
         permissions={permissionsRole?.permissions ?? []}
+        groups={permissionGroups}
+        isLoading={isPermissionsLoading}
         labels={labels.permissions}
         onAddPermission={() => permissionsRole && handleEditRole(permissionsRole)}
       />
@@ -348,7 +371,7 @@ export const RolesTableSection = ({
       <AssignUsersDialog
         open={!!assignRole}
         onOpenChange={(open) => !open && setAssignRole(null)}
-        roleId={assignRole?.id ?? null}
+        roleSlug={assignRole?.slug ?? null}
         roleName={assignRole?.name ?? ''}
         labels={labels.assignDialog}
         onAssign={async (userIds) => {

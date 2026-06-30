@@ -1,5 +1,6 @@
 export { DashboardStats } from './dashboard-stats'
 export { DashboardWelcomeCard } from './dashboard-welcome-card'
+export { useAdminDashboard } from './hooks/use-admin-dashboard'
 export * from './recent-orders'
 export * from './order-volume'
 export * from './active-drivers'

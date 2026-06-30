@@ -28,6 +28,7 @@ import { cn, PAGE_EASE } from '@/presentation/utils'
 interface BranchesTabProps {
   branches: CompanyDetailsBranch[]
   search: string
+  isLoading?: boolean
   onSearchChange: (value: string) => void
   focusedBranchSlug?: string
   onViewOrders: (branchSlug: string) => void
@@ -126,6 +127,7 @@ BranchCard.displayName = 'BranchCard'
 export const BranchesTab = ({
   branches,
   search,
+  isLoading = false,
   onSearchChange,
   focusedBranchSlug,
   onViewOrders,
@@ -196,7 +198,12 @@ export const BranchesTab = ({
           ) : undefined
         }
       >
-        {filteredBranches.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Building2 className="size-10 animate-pulse text-muted-foreground/40" strokeWidth={1.5} />
+            <p className="mt-3 text-sm text-muted-foreground">{t('detailsLoadingBranches')}</p>
+          </div>
+        ) : filteredBranches.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <Building2 className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
             <p className="mt-3 text-sm text-muted-foreground">{t('detailsNoBranches')}</p>

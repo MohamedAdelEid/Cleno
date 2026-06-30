@@ -1,27 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PaginationState } from '@tanstack/react-table'
 
-import type { OperationalBag, OperationalBagStats } from '@/domain/entities'
+import { bagAdapter } from '@/application/adapters/bag.adapter'
+import type {
+  OperationalBag,
+  OperationalBagStatTrends,
+  OperationalBagStats,
+} from '@/domain/entities'
 import {
-  OperationalBagStatus,
+  OperationalBagSystemStatus,
   type OperationalBagStatus as OperationalBagStatusType,
   type OperationalBagSystemStatus as OperationalBagSystemStatusType,
 } from '@/domain/enums'
 import type { OperationalBagFormValues } from '@/domain/schemas'
-import {
-  computeOperationalBagStats,
-  operationalBagsDummyData,
-} from '@/presentation/components/admin/operational-bags/operational-bags.data'
+import { bagsApi } from '@/infrastructure/api/bags.api'
 
 const SEARCH_DEBOUNCE_MS = 400
-const INITIAL_LOAD_MS = 650
 
 export type BagSystemFilterValue = OperationalBagSystemStatusType | 'all'
 export type BagOperationalFilterValue = OperationalBagStatusType | 'all'
 
+const emptyStats: OperationalBagStats = {
+  totalBags: 0,
+  activeBags: 0,
+  inactiveBags: 0,
+  assignedBags: 0,
+  processingBags: 0,
+  missingBags: 0,
+  readyBags: 0,
+}
+
+const emptyTrends: OperationalBagStatTrends = {
+  totalBags: [],
+  activeBags: [],
+  inactiveBags: [],
+  assignedBags: [],
+  processingBags: [],
+  missingBags: [],
+  readyBags: [],
+}
+
 export const useOperationalBags = () => {
   const [bags, setBags] = useState<OperationalBag[]>([])
+  const [stats, setStats] = useState<OperationalBagStats>(emptyStats)
+  const [statTrends, setStatTrends] = useState<OperationalBagStatTrends>(emptyTrends)
+  const [totalRows, setTotalRows] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [isStatsLoading, setIsStatsLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const [systemFilter, setSystemFilter] = useState<BagSystemFilterValue>('all')
@@ -42,39 +67,57 @@ export const useOperationalBags = () => {
     )
   }, [debouncedKeyword, systemFilter, operationalFilter])
 
-  useEffect(() => {
-    setIsLoading(true)
-    const timer = window.setTimeout(() => {
-      setBags(operationalBagsDummyData)
-      setIsLoading(false)
-    }, INITIAL_LOAD_MS)
+  const fetchStats = useCallback(async () => {
+    setIsStatsLoading(true)
+    const result = await bagsApi.getStats()
 
-    return () => window.clearTimeout(timer)
+    if (result.hasValue && result.data) {
+      setStats(result.data.stats)
+      setStatTrends(result.data.trends)
+    }
+
+    setIsStatsLoading(false)
   }, [])
 
-  const stats: OperationalBagStats = useMemo(() => computeOperationalBagStats(bags), [bags])
+  const fetchBags = useCallback(async () => {
+    setIsLoading(true)
 
-  const filteredBags = useMemo(() => {
-    const q = debouncedKeyword.toLowerCase()
-
-    return bags.filter((bag) => {
-      const matchesSystem = systemFilter === 'all' || bag.systemStatus === systemFilter
-      const matchesOperational =
-        operationalFilter === 'all' || bag.operationalStatus === operationalFilter
-      const matchesSearch =
-        !q ||
-        bag.bagId.toLowerCase().includes(q) ||
-        bag.currentOrderNumber?.toLowerCase().includes(q) ||
-        bag.customerName?.toLowerCase().includes(q)
-
-      return matchesSystem && matchesOperational && matchesSearch
+    const result = await bagsApi.getAdminAll({
+      pageNumber: paginationState.pageIndex + 1,
+      pageSize: paginationState.pageSize,
+      keyword: debouncedKeyword || undefined,
+      isActive:
+        systemFilter === 'all' ? undefined : systemFilter === OperationalBagSystemStatus.Active,
+      operationalStatus:
+        operationalFilter === 'all' ? undefined : bagAdapter.statusToApi(operationalFilter),
+      sortBy: 'updatedAt',
+      sortDirection: 'desc',
     })
-  }, [bags, debouncedKeyword, operationalFilter, systemFilter])
 
-  const paginatedBags = useMemo(() => {
-    const start = paginationState.pageIndex * paginationState.pageSize
-    return filteredBags.slice(start, start + paginationState.pageSize)
-  }, [filteredBags, paginationState])
+    if (result.hasValue && result.data) {
+      setBags(result.data)
+      setTotalRows(result.pagination?.total ?? result.data.length)
+    } else {
+      setBags([])
+      setTotalRows(0)
+    }
+
+    setIsLoading(false)
+  }, [
+    debouncedKeyword,
+    operationalFilter,
+    paginationState.pageIndex,
+    paginationState.pageSize,
+    systemFilter,
+  ])
+
+  useEffect(() => {
+    void fetchStats()
+  }, [fetchStats])
+
+  useEffect(() => {
+    void fetchBags()
+  }, [fetchBags])
 
   const hasActiveFilters =
     debouncedKeyword.length > 0 || systemFilter !== 'all' || operationalFilter !== 'all'
@@ -86,87 +129,115 @@ export const useOperationalBags = () => {
     setOperationalFilter('all')
   }, [])
 
+  const refresh = useCallback(async () => {
+    await Promise.all([fetchStats(), fetchBags()])
+  }, [fetchBags, fetchStats])
+
   const isBagIdTaken = useCallback(
     (bagId: string, excludeId?: string) =>
-      bags.some(
-        (bag) => bag.bagId.toUpperCase() === bagId.toUpperCase() && bag.id !== excludeId,
-      ),
+      bags.some((bag) => bag.bagId.toUpperCase() === bagId.toUpperCase() && bag.id !== excludeId),
     [bags],
   )
 
-  const createBag = useCallback((values: OperationalBagFormValues): boolean => {
-    if (isBagIdTaken(values.bagId)) return false
+  const createBag = useCallback(
+    async (values: OperationalBagFormValues): Promise<boolean> => {
+      const result = await bagsApi.create(bagAdapter.toCreateRequest(values))
+      if (!result.hasValue) return false
 
-    const newBag: OperationalBag = {
-      id: `bag-${crypto.randomUUID()}`,
-      bagId: values.bagId.toUpperCase(),
-      systemStatus: values.systemStatus,
-      operationalStatus: OperationalBagStatus.Ready,
-      currentOrderId: null,
-      currentOrderNumber: null,
-      customerId: null,
-      customerName: null,
-      customerSlug: null,
-      updatedAt: new Date().toISOString(),
-    }
-
-    setBags((current) => [newBag, ...current])
-    return true
-  }, [isBagIdTaken])
-
-  const updateBag = useCallback(
-    (id: string, values: OperationalBagFormValues): boolean => {
-      if (isBagIdTaken(values.bagId, id)) return false
-
-      setBags((current) =>
-        current.map((bag) =>
-          bag.id === id
-            ? {
-                ...bag,
-                bagId: values.bagId.toUpperCase(),
-                systemStatus: values.systemStatus,
-                updatedAt: new Date().toISOString(),
-              }
-            : bag,
-        ),
-      )
+      await refresh()
       return true
     },
-    [isBagIdTaken],
+    [refresh],
   )
 
-  const deleteBag = useCallback((id: string) => {
-    setBags((current) => current.filter((bag) => bag.id !== id))
-  }, [])
+  const updateBag = useCallback(
+    async (id: string, values: OperationalBagFormValues): Promise<boolean> => {
+      const bag = bags.find((item) => item.id === id)
+      if (!bag) return false
 
-  const bulkDeleteBags = useCallback((ids: string[]) => {
-    if (!ids.length) return
-    const idSet = new Set(ids)
-    setBags((current) => current.filter((bag) => !idSet.has(bag.id)))
-  }, [])
+      const result = await bagsApi.update(bag.slug, bagAdapter.toUpdateRequest(values))
+      if (!result.hasValue) return false
+
+      await refresh()
+      return true
+    },
+    [bags, refresh],
+  )
+
+  const deleteBag = useCallback(
+    async (id: string): Promise<boolean> => {
+      const bag = bags.find((item) => item.id === id)
+      if (!bag) return false
+
+      const result = await bagsApi.delete(bag.slug)
+      if (!result.hasValue) return false
+
+      await refresh()
+      return true
+    },
+    [bags, refresh],
+  )
+
+  const bulkDeleteBags = useCallback(
+    async (ids: string[]): Promise<boolean> => {
+      const selectedBags = bags.filter((bag) => ids.includes(bag.id))
+      if (!selectedBags.length) return false
+
+      const results = await Promise.all(selectedBags.map((bag) => bagsApi.delete(bag.slug)))
+      const success = results.every((result) => result.hasValue)
+
+      if (success) {
+        await refresh()
+      }
+
+      return success
+    },
+    [bags, refresh],
+  )
 
   const bulkUpdateSystemStatus = useCallback(
-    (ids: string[], systemStatus: OperationalBagSystemStatusType) => {
-      if (!ids.length) return
-      const idSet = new Set(ids)
-      const now = new Date().toISOString()
+    async (ids: string[], systemStatus: OperationalBagSystemStatusType): Promise<boolean> => {
+      const selectedBags = bags.filter((bag) => ids.includes(bag.id))
+      if (!selectedBags.length) return false
 
-      setBags((current) =>
-        current.map((bag) =>
-          idSet.has(bag.id) ? { ...bag, systemStatus, updatedAt: now } : bag,
+      const results = await Promise.all(
+        selectedBags.map((bag) =>
+          bagsApi.update(
+            bag.slug,
+            bagAdapter.toUpdateRequest({
+              bagId: bag.bagId,
+              notes: bag.notes,
+              weight: bag.weight,
+              systemStatus,
+              operationalStatus: bag.operationalStatus,
+            }),
+          ),
         ),
       )
+      const success = results.every((result) => result.hasValue)
+
+      if (success) {
+        await refresh()
+      }
+
+      return success
     },
-    [],
+    [bags, refresh],
   )
+
+  const getBagDetails = useCallback(async (slug: string) => bagsApi.getBySlug(slug), [])
+
+  const paginatedBags = useMemo(() => bags, [bags])
 
   return {
     bags,
     stats,
-    filteredBags,
+    statTrends,
+    filteredBags: bags,
     paginatedBags,
-    totalRows: filteredBags.length,
+    totalRows,
     isLoading,
+    isStatsLoading,
     keyword,
     setKeyword,
     systemFilter,
@@ -182,6 +253,7 @@ export const useOperationalBags = () => {
     deleteBag,
     bulkDeleteBags,
     bulkUpdateSystemStatus,
+    getBagDetails,
     isBagIdTaken,
   }
 }

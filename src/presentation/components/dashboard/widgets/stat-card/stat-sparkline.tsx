@@ -14,14 +14,16 @@ interface StatSparklineProps {
 const WIDTH = 88
 const HEIGHT = 36
 const PADDING = 3
+const FALLBACK_DATA = [0, 0]
 
 const buildPaths = (data: number[]) => {
-  const min = Math.min(...data)
-  const max = Math.max(...data)
+  const values = data.length >= 2 ? data : FALLBACK_DATA
+  const min = Math.min(...values)
+  const max = Math.max(...values)
   const range = max - min || 1
-  const step = (WIDTH - PADDING * 2) / (data.length - 1)
+  const step = (WIDTH - PADDING * 2) / (values.length - 1)
 
-  const points = data.map((value, index) => ({
+  const points = values.map((value, index) => ({
     x: PADDING + index * step,
     y: PADDING + (HEIGHT - PADDING * 2) * (1 - (value - min) / range),
   }))
@@ -59,7 +61,8 @@ export const StatSparkline = ({
   delay = 0,
 }: StatSparklineProps) => {
   const id = useId()
-  const { linePath, areaPath } = useMemo(() => buildPaths(data), [data])
+  const normalizedData = data.length >= 2 ? data : FALLBACK_DATA
+  const { linePath, areaPath } = useMemo(() => buildPaths(normalizedData), [normalizedData])
   const colors = trendColors[trend]
 
   return (

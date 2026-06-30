@@ -1,5 +1,4 @@
 import type {
-  DriverDropdownItemDto,
   OrderAssignDriverRequestDto,
   OrderTrackingDataDto,
   OrderUpdateStatusRequestDto,
@@ -8,7 +7,7 @@ import type {
   OrdersDashboardDataDto,
 } from '@/application/dtos/orders/orders-admin.dto'
 import { orderAdapter } from '@/application/adapters/order.adapter'
-import type { ManagedOrder, OrderDriver } from '@/domain/entities'
+import type { ManagedOrder } from '@/domain/entities'
 import { OrderAnalysisInterval } from '@/domain/enums'
 import type {
   ActiveShipment,
@@ -152,32 +151,4 @@ export const ordersApi = {
   },
 }
 
-export const driversApi = {
-  async getDropdown(includeAll = false): Promise<ApiResult<OrderDriver[]>> {
-    const result = await httpClient.get<DriverDropdownItemDto[]>({
-      url: API_ENDPOINTS.drivers.dropdown,
-      params: { includeAll },
-    })
-
-    if (!result.hasValue || !result.data) {
-      return { ...result, data: null }
-    }
-
-    try {
-      return {
-        ...result,
-        data: result.data.map((item) => orderAdapter.toAssignableDriver(item)),
-      }
-    } catch {
-      return {
-        ...result,
-        hasValue: false,
-        data: null,
-        error: {
-          code: 'ADAPTER_ERROR',
-          message: 'Unable to parse drivers dropdown response.',
-        },
-      }
-    }
-  },
-}
+export { driversApi } from './drivers.api'

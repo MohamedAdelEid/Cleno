@@ -2,7 +2,8 @@ import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRight } from 'lucide-react'
 
 import type { LaundryOrder } from '@/domain/entities/laundry-order.entity'
-import { buildLaundryIncidentsPath } from '@/presentation/routes/laundry.routes'
+import { ROUTES } from '@/presentation/routes/routes.constants'
+import { useTranslation } from '@/presentation/hooks/use-translation'
 import { useNavigate } from 'react-router-dom'
 
 export interface OverdueAlertOrder {
@@ -13,32 +14,31 @@ export interface OverdueAlertOrder {
 interface OperationalAlertsProps {
   overdueAlert: { count: number; orders: OverdueAlertOrder[] } | null
   orders?: LaundryOrder[]
-  labels: {
-    title: string
-    subtitle: string
-    affectedOrders: string
-  }
   onOrderClick?: (order: LaundryOrder) => void
 }
 
 export const OperationalAlerts = ({
   overdueAlert,
   orders = [],
-  labels,
   onOrderClick,
 }: OperationalAlertsProps) => {
+  const { t } = useTranslation('laundry')
   const navigate = useNavigate()
 
   if (!overdueAlert || overdueAlert.count === 0) return null
 
-  const handleChipClick = (slug: string) => {
-    const order = orders.find((item) => item.slug === slug)
-    if (order) {
-      onOrderClick?.(order)
+  const handleChipClick = (order: OverdueAlertOrder) => {
+    const matched = orders.find((item) => item.slug === order.slug)
+    if (matched) {
+      onOrderClick?.(matched)
       return
     }
 
-    navigate(buildLaundryIncidentsPath(slug))
+    const params = new URLSearchParams({
+      keyword: order.orderNumber,
+      isOpen: 'true',
+    })
+    navigate(`${ROUTES.INCIDENTS.INDEX}?${params.toString()}`)
   }
 
   return (
@@ -55,7 +55,7 @@ export const OperationalAlerts = ({
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <h3 className="text-sm font-semibold text-red-900 dark:text-red-200">
-              {labels.title.replace('{{count}}', String(overdueAlert.count))}
+              {t('alertOverdueTitle').replace('{{count}}', String(overdueAlert.count))}
             </h3>
             <span className="hidden text-red-300 sm:inline dark:text-red-700">·</span>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -63,7 +63,7 @@ export const OperationalAlerts = ({
                 <button
                   key={order.slug}
                   type="button"
-                  onClick={() => handleChipClick(order.slug)}
+                  onClick={() => handleChipClick(order)}
                   className="inline-flex items-center gap-1 rounded-md border border-red-200/80 bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-red-800 transition-colors hover:bg-red-50 dark:border-red-800/60 dark:bg-red-950/50 dark:text-red-200 dark:hover:bg-red-950/70"
                 >
                   {order.orderNumber}
@@ -72,7 +72,7 @@ export const OperationalAlerts = ({
               ))}
             </div>
           </div>
-          <p className="text-xs text-red-700/80 dark:text-red-400/80">{labels.subtitle}</p>
+          <p className="text-xs text-red-700/80 dark:text-red-400/80">{t('alertOverdueSubtitle')}</p>
         </div>
       </div>
     </motion.div>

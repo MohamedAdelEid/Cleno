@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { arSA, enUS } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import {
   OrderAnalysisCard,
@@ -19,6 +20,8 @@ import { useTranslation } from '@/presentation/hooks/use-translation'
 export const OrdersPage = () => {
   const { t } = useTranslation('orders')
   const { isRtl } = useDirection()
+  const [searchParams] = useSearchParams()
+  const searchFromUrl = searchParams.get('search') ?? ''
   const [refreshTick, setRefreshTick] = useState(0)
 
   const {
@@ -50,7 +53,7 @@ export const OrdersPage = () => {
     cancelOrder,
     bulkUpdateStatus,
     bulkCancelOrders,
-  } = useOrders()
+  } = useOrders({ initialKeyword: searchFromUrl })
 
   const formattedLastUpdated = format(lastUpdated, 'MMM d, yyyy h:mm a', {
     locale: isRtl ? arSA : enUS,

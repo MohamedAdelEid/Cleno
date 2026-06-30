@@ -6,10 +6,12 @@ import { useFilteredNavigation } from '@/presentation/hooks/use-filtered-navigat
 import { useTranslation } from '@/presentation/hooks/use-translation'
 import {
   findBreadcrumbRouteOverride,
+  findCompanyDetailsBreadcrumbSlug,
   findNavItemByPath,
   normalizeNavPath,
 } from '@/presentation/navigation/navigation.helpers'
 import { ROUTES } from '@/presentation/routes/routes.constants'
+import { useBreadcrumbStore } from '@/presentation/store/breadcrumb.store'
 
 export interface BreadcrumbEntry {
   id: string
@@ -22,8 +24,28 @@ export const useBreadcrumbs = (): BreadcrumbEntry[] => {
   const { pathname } = useLocation()
   const { t } = useTranslation('navigation')
   const navigation = useFilteredNavigation()
+  const dynamicLabel = useBreadcrumbStore((state) => state.dynamicLabel)
 
   return useMemo(() => {
+    const companyDetailsSlug = findCompanyDetailsBreadcrumbSlug(pathname)
+
+    if (companyDetailsSlug) {
+      const companiesMatch = findNavItemByPath(navigation, ROUTES.COMPANIES.INDEX)
+
+      return [
+        {
+          id: 'nav:companies',
+          label: t('companies'),
+          href: ROUTES.COMPANIES.INDEX,
+          icon: companiesMatch?.item.icon,
+        },
+        {
+          id: `company:${companyDetailsSlug}`,
+          label: dynamicLabel ?? companyDetailsSlug,
+        },
+      ]
+    }
+
     const routeOverride = findBreadcrumbRouteOverride(pathname)
     const match = findNavItemByPath(navigation, pathname)
     const normalizedPath = normalizeNavPath(pathname)
@@ -74,5 +96,5 @@ export const useBreadcrumbs = (): BreadcrumbEntry[] => {
     }
 
     return crumbs
-  }, [navigation, pathname, t])
+  }, [dynamicLabel, navigation, pathname, t])
 }

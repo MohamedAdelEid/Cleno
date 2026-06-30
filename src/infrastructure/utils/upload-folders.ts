@@ -6,4 +6,7 @@ export const UPLOAD_FOLDERS = {
   users: {
     avatars: 'users/avatars',
   },
+  drivers: {
+    photos: 'drivers',
+  },
 } as const

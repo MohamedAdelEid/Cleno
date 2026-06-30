@@ -12,6 +12,7 @@ export interface RequestOptions<TData = unknown> {
   isFormData?: boolean
   withCredentials?: boolean
   timeout?: number
+  responseType?: AxiosRequestConfig['responseType']
 }
 
 const buildHeaders = (custom?: Record<string, string>): Record<string, string> | undefined =>
@@ -23,6 +24,7 @@ const toRequestConfig = (options: Omit<RequestOptions, 'url'>) => ({
   headers: buildHeaders(options.headers),
   ...(options.withCredentials === true && { withCredentials: true }),
   ...(options.timeout != null && { timeout: options.timeout }),
+  ...(options.responseType != null && { responseType: options.responseType }),
 })
 
 setupHttpInterceptors(axiosInstance)
